@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Register</title>
+</head>
+<body>
+	<form action="./finishregister">
+		<div class="textinput">  <!--Give form data to flask-->
+			<label for="email">Email: </label> <input id="email" type="text">
+		</div>
+		<div class="textinput">
+			<label for="password">Password: </label> <input id="password" type="password">
+		</div>
+		<div class="textinput">
+			<label for="repeatpassword">Repat Password: </label> <input id="repeatpassword" type="password">
+		</div>
+		<div class="textinput">
+			<label for="firstnames">Vorname: </label> <input id="firstnames" type="text">
+		</div>
+		<div class="textinput">
+			<label for="lastname">Nachname: </label> <input id="lastname" type="text">
+		</div>
+		<div class="buttons">
+			<input type="submit" id="submit" value="submit">
+		</div>
+	</form>
+</body>
+</html>
