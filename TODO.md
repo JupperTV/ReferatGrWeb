@@ -1,5 +1,4 @@
 # TODO
 
-- [ ] ```pip install flask```
-- [x] Dulip fragen, ob ich python benutzen darf
+- [ ] Eventuell Docker anbindung, dass mit verschiedenen Versionen getestet wird?
 
