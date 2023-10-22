@@ -1,14 +1,15 @@
 #!/usr/bin/python
 
 import csv  # Alle Daten werden als CSVs gespeichert
-from typing import Final
+from typing import Final, Iterable
 import re  # Regex
-# ! WICHTIGE NOTIZ: Ich obfuskiere Daten, anstatt sie zu verschlüsseln,
+# ! WICHTIGE NOTIZ: Ich obfuskiere Daten anstatt sie zu verschlüsseln,
 # ! weil diese Applikation sowieso nur für Demonstrationszwecke
 # ! gemacht wurde
 from base64 import b64encode, b64decode  # Zum Obfuskieren der Daten
-import pathlib  # Evtl. in der Zukunft benutzen
 import uuid  # Zur Erstellung von eindeutigen IDs
+
+import pathlib  # Evtl. in der Zukunft benutzen
 
 import errors
 
@@ -18,7 +19,8 @@ _UNSUCCESFUL_MATCH = None
 _CSV_PATH: Final[str] = "data"
 _CSV_ACCOUNT: Final[str] = f"{_CSV_PATH}\\accounts.csv"
 
-__all__ = ["PasswordsAreEqual", "AddRegistration", "UserExists"]
+__all__ = ["PasswordsAreEqual", "AddRegistration", "UserExists", "LoginIsValid",
+           "EmailIsValid", "PasswordIsValid"]
 
 def _obfuscateText_(text: bytes) -> bytes:
     if type(text) is str:
@@ -26,17 +28,49 @@ def _obfuscateText_(text: bytes) -> bytes:
         text = bytes(text, encoding="unicode")
     return b64encode(text)
 
+# * id in accounts.csv == token in cookie
+def GetUserToken(email: str) -> bool:
+    accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
+    reader: list[list] = list(csv.reader(accountfile_read, delimiter=","))
+    for row in reader[1:]:
+        if row[1] == email:
+            accountfile_read.close()
+            return row[0]
+    accountfile_read.close()
+    raise errors.EmailIsNotRegisteredError()
 
-def PasswordsAreEqual(obfuscatedpassword: bytes, originalpassword: str) -> bool:
-    if type(originalpassword) is str:
-        # Unicode anstatt UTF-8, weil Python 3 Unicode für strings benutzt
-        originalpassword = bytes(originalpassword, encoding="unicode-escape")
-    return originalpassword == b64decode(obfuscatedpassword)
+def GetEmailFromToken(token: str) -> str | None:
+    accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
+    reader: list[dict] = list(csv.DictReader(accountfile_read, delimiter=","))
+    for row in reader:
+        if row["id"] == token:
+            accountfile_read.close()
+            return row["email"]
+    accountfile_read.close()
+    return None
+    
+    
+
+def LoginIsValid(email: str, originalpassword: str) -> bool:
+    accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
+    reader: Iterable[dict] = csv.DictReader(accountfile_read, delimiter=",")
+    for row in reader:
+        # Don't check passwords until emails are the same
+        if row["email"] != email:
+            continue
+        if PasswordsAreEqual(originalpassword, row["password"]):
+            accountfile_read.close()
+            return True
+    accountfile_read.close()
+    return False
+
+def PasswordsAreEqual(originalpassword: str, obfuscatedpassword: str) -> bool:
+    return originalpassword == b64decode(obfuscatedpassword).decode()
 
 def UserExists(email: str) -> bool:
     reader = csv.reader(open(_CSV_ACCOUNT, "r"), delimiter=",")
-    isFirstLine: bool = True
-    for line in list(reader)[1:]:  # Skip first line because it's just headers
+    # Skip first line because it's just headers
+    for line in list(reader)[1:]:
         if email in line:
             return True
     return False
@@ -64,7 +98,7 @@ def AddRegistration(email: str, password: str,
     if not PasswordIsValid(password):
         raise ValueError("Password ist nicht gültig")
     if not EmailIsValid(email):
-        raise ValueError("E-Mail Adresse ist nicht gültig")   
+        raise ValueError("E-Mail Adresse ist nicht gültig")
     
     # * Komisches Python verhalten: 
     # newline in open() ist ein leerer string, weil csv.writer
@@ -82,7 +116,7 @@ def AddRegistration(email: str, password: str,
     
     for row in reader:
         if email in row:
-            raise errors.AccountAlreadyExists()
+            raise errors.AccountAlreadyExistsError()
     accountfile_read.close()
 
     accountid = uuid.uuid4()  # Zufällige UUID
