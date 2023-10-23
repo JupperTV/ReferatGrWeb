@@ -1,1 +1,2 @@
-id,name,date,time
+id,name,epoch,organizer,country,city,zipcode,street,housenumber
+

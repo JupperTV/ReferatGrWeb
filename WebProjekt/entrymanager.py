@@ -5,13 +5,19 @@
 # als einen Eintrag bzw. einer Anmeldung zu diesem Event gespeichert
 
 import csv
-from typing import Final
+from typing import Final, Iterable
+
+class Entry:
+    def __init__():
+        raise NotImplementedError()
 
 _CSV_PATH: Final[str] = "data"
 _CSV_ENTRY: Final[str] = f"{_CSV_PATH}\\entries.csv"
 
 def CreateEntry(accountid: int, eventid: int):
-    csv.reader(open(_CSV_ENTRY))
+    entryfile_read = open(_CSV_ENTRY, "r", newline="")
+    reader: Iterable[list[str]] = csv.reader(entryfile_read, delimiter=",")
+    next(reader)  # Skip first line
     raise NotImplementedError("Schreibe eine Zeile in entries.csv")
 
 def SendMessageToEntries(message: str, eventid: int):

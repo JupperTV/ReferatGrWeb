@@ -2,6 +2,7 @@
 
 - [x] Registrierung
 - [x] Login
+- [ ] !!! Entscheiden, ob ich ```for row in reader``` oder ```for line in reader``` benutze
 - [ ] Eventersteller
 - [ ] Event anseher
 - [ ] Event umänderer

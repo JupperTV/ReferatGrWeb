@@ -5,13 +5,14 @@ system("cls")
 del system
 
 from typing import Final
+import time
 
-import flask  # Das Web-Framework, das hier hauptsächlich benutzt wird
+import flask  # Das Framework
 
-import entrymanager
-import eventmanager
-import accountmanager
-import errors
+import .entrymanager
+import .eventmanager
+import .accountmanager
+import .errors
 
 app = flask.Flask(__name__, static_folder="static", template_folder="static")
 
@@ -58,12 +59,12 @@ def finishregister():
         return "There is already an account registered with that email"
     if form["password"] != form["repeatpassword"]:
         return "The passwords are not the same"
-    
+
     try:
         accountmanager.AddRegistration(form["email"], form["password"], form["firstname"], form["lastname"])
     except errors.AccountAlreadyExistsError:
         return "There is already an account registered with that email"
-    
+
     response: flask.Response = flask.make_response(f"Your email is now registered and you are logged in as {form["email"]}")
     response.set_cookie(key=COOKIE_NAME,
                         value=accountmanager.GetUserToken(form["email"]))
@@ -74,7 +75,7 @@ def finishregister():
 def checklogin():
     if flask.request.method != "POST":
         return flask.redirect(flask.url_for("login"))
-    
+
     form = flask.request.form
     if not accountmanager.UserExists(form["email"]):
         return "There is no account with this email"
@@ -82,11 +83,19 @@ def checklogin():
         return "Invalid password"
     if not accountmanager.LoginIsValid(form["email"], form["password"]):
         return "Wrong password"
-    
+
     response: flask.Response = flask.make_response(f"You are now logged in as {form["email"]}")
     response.set_cookie(key=COOKIE_NAME,
                         value=accountmanager.GetUserToken(form["email"]))
     return response
+
+# TODO
+@app.route("/allevents")
+def allevents():
+    allEvents: list[eventmanager.Events] = eventmanager.GetAllEvents()
+    if allEvents == []:
+        return "No Events :("
+    raise NotImplementedError()
 
 # TODO
 @app.route("/events")
