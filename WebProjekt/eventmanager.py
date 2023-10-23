@@ -10,7 +10,8 @@ import uuid
 import .errors
 
 # * Vielleicht ist es sogar besser, das zu einem TypedDict umzuwandeln
-class Events:
+# TODO: Test
+class Event:
     def InitFromList(elements: list[str]):
         if len(list) < 8:
             raise errors.NotEnoughElementsInListError()
@@ -26,6 +27,11 @@ class Events:
         self.street = street
         self.housenumber = housenumber
 
+    def ToList(self):
+        return [self.eventid, self.name, self.organizer, self.country,
+                self.city, self.zipcode, self.street, self.housenumber]
+
+
 _CSV_PATH: Final[str] = "data"
 _CSV_EVENT: Final[str] = f"{_CSV_PATH}\\events.csv"
 
@@ -34,9 +40,10 @@ def _getreader_() -> Iterable[list[str]]:
     eventfile_read = open(_CSV_EVENT, "r", newline="")
     return csv.reader(eventfile_read, delimiter=",")
 
-def GetAllEvents() -> list[Events]:  # * Replace tuple with the Entry Class???
+# TODO: Test
+def GetAllEvents() -> list[Event]:  # * Replace tuple with the Entry Class???
     reader = filter(None, list(_getreader_()))  # Filtere zuerst leere Listen aus
-    allEvents: list[Events] = []
+    allEvents: list[Event] = []
     print(reader)
     if len(reader) < 2 or not reader[1]:
         return []
@@ -44,31 +51,33 @@ def GetAllEvents() -> list[Events]:  # * Replace tuple with the Entry Class???
         allEvents.append(row[1:])  # row[0] ist die id, was nicht angezeigt werden soll
     return allEvents
 
-def GetEventsByName(name: str) -> list[Events]:  # * Replace tuple with the Entry Class???
+# TODO: Test
+def GetEventsByName(name: str) -> list[Event]:  # * Replace tuple with the Entry Class???
     """Get all of the events that have the same name"""
     reader = _getreader_()
-    allEvents: list[Events] =
+    allEvents: list[Event] =
     for row in reader:
         if row and name in row:  # ```if row``` == row ist nicht leer
-            allEvents.append(Events.InitFromList(row))
+            allEvents.append(Event.InitFromList(row))
     return allEvents
 
-def EventExists(name: str, epochtime: float) -> bool:
+# TODO: Test
+def EventExists(event: Event) -> bool:
     reader = _getreader_()
     next(reader)  # Überspringe Header
     for row in reader:
-        if row[1] != name:
-            continue
-        if float(row[2]) == epochtime:
+        if event == Event.InitFromList(row):
             return True
     return False
 
-def CreateEvent(name: str, epochtime: float) -> None:
-    if EventExists(name, epochtime):
+# TODO: Test
+# organizer, country, city, zipcode, street, housenumber
+def CreateEvent(event: Event) -> None:
+    if EventExists(event):
         raise errors.EventAlreadyExistsError()
-    eventfile_read = open(_CSV_EVENT, "r", newline="")
+    eventfile_read = open(_CSV_EVENT, "r", newline="")  # Vielleicht _getwriter()_?
     writer = csv.writer(eventfile_read, delimiter=",")
-    writer.writerow([uuid.uuid4(), name, epochtime])
+    writer.writerow(event.ToList())
 
 def ModifyEvent():
     return NotImplementedError()

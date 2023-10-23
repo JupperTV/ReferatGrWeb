@@ -115,3 +115,4 @@ def deleteevent():
 if __name__ == "__main__":
     DEFAULT_HTTP_PORT = 80  # Zur Vermeidung von Magic Numbers
     app.run(port=DEFAULT_HTTP_PORT, debug=True)
+
