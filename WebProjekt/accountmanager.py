@@ -9,7 +9,7 @@ import re#gex
 from typing import Final, Iterable
 import uuid  # Zur Erstellung von eindeutigen IDs
 
-import .errors
+import errors
 
 # Quelle: https://regexr.com/3e48o
 _REGEX_VALID_EMAIL: Final = r"^\S+@\S+\.\S+$"
@@ -40,6 +40,8 @@ def GetUserToken(email: str) -> bool:
     accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
     reader: list[list] = list(csv.reader(accountfile_read, delimiter=","))
     for row in reader[1:]:
+        if not row:  # if row is empty go to the next line
+            continue
         if row[1] == email:
             accountfile_read.close()
             return row[0]

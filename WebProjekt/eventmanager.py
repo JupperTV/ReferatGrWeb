@@ -1,25 +1,27 @@
 #!/usr/bin/python
 # * Was ist ein Event?
 # Ein Event ist eine Veranstaltung, zu der sich Nutzer eintragen können.
-# Beispiele: Vorlesungen, Online-Treffs
+# Beispiele: Vorlesungen, Online-Videokonferzen, Feier
 
 import csv
 from typing import Final, Iterable, TypedDict
 import uuid
 
-import .errors
+import errors
 
 # * Vielleicht ist es sogar besser, das zu einem TypedDict umzuwandeln
 # TODO: Test
 class Event:
     def InitFromList(elements: list[str]):
-        if len(list) < 8:
+        if len(elements) < 8:
             raise errors.NotEnoughElementsInListError()
-        return __init__(self, *elements)
+        print(elements)
+        return Event(*elements)
 
-    def __init__(self, eventid, name, organizer, country, city, zipcode, street, housenumber):
+    def __init__(self, eventid, name, epoch, organizer, country, city, zipcode, street, housenumber):
         self.eventid = eventid
         self.name = name
+        self.epoch = epoch
         self.organizer = organizer
         self.country = country
         self.city = city
@@ -27,9 +29,9 @@ class Event:
         self.street = street
         self.housenumber = housenumber
 
-    def ToList(self):
-        return [self.eventid, self.name, self.organizer, self.country,
-                self.city, self.zipcode, self.street, self.housenumber]
+    def __iter__(self):
+        return iter([self.eventid, self.name, self.epoch, self.organizer, self.country,
+                self.city, self.zipcode, self.street, self.housenumber])
 
 
 _CSV_PATH: Final[str] = "data"
@@ -42,22 +44,22 @@ def _getreader_() -> Iterable[list[str]]:
 
 # TODO: Test
 def GetAllEvents() -> list[Event]:  # * Replace tuple with the Entry Class???
-    reader = filter(None, list(_getreader_()))  # Filtere zuerst leere Listen aus
+    reader = list(filter(None, list(_getreader_())))  # Filtere zuerst leere Listen aus
     allEvents: list[Event] = []
-    print(reader)
     if len(reader) < 2 or not reader[1]:
         return []
     for row in reader[1:]:
-        allEvents.append(row[1:])  # row[0] ist die id, was nicht angezeigt werden soll
+        print(row, end="\n\n")
+        allEvents.append(Event.InitFromList(row))  # row[0] ist die id, was nicht angezeigt werden soll
     return allEvents
 
 # TODO: Test
 def GetEventsByName(name: str) -> list[Event]:  # * Replace tuple with the Entry Class???
     """Get all of the events that have the same name"""
     reader = _getreader_()
-    allEvents: list[Event] =
+    allEvents: list[Event] = []
     for row in reader:
-        if row and name in row:  # ```if row``` == row ist nicht leer
+        if (row) and (name in row):  # ```if row``` == row ist nicht leer
             allEvents.append(Event.InitFromList(row))
     return allEvents
 
@@ -77,7 +79,7 @@ def CreateEvent(event: Event) -> None:
         raise errors.EventAlreadyExistsError()
     eventfile_read = open(_CSV_EVENT, "r", newline="")  # Vielleicht _getwriter()_?
     writer = csv.writer(eventfile_read, delimiter=",")
-    writer.writerow(event.ToList())
+    writer.writerow(list(event))
 
 def ModifyEvent():
     return NotImplementedError()

@@ -4,15 +4,15 @@ from os import system # ! NOTIZ: NACHHER LÖSCHEN
 system("cls")
 del system
 
-from typing import Final
 import time
+from typing import Final
 
 import flask  # Das Framework
 
-import .entrymanager
-import .eventmanager
-import .accountmanager
-import .errors
+import entrymanager
+import eventmanager
+import accountmanager
+import errors
 
 app = flask.Flask(__name__, static_folder="static", template_folder="static")
 
@@ -93,19 +93,37 @@ def checklogin():
 @app.route("/allevents")
 def allevents():
     allEvents: list[eventmanager.Events] = eventmanager.GetAllEvents()
-    if allEvents == []:
+    if not allEvents:
         return "No Events :("
-    raise NotImplementedError()
+    ret = ""
+    keys = ["id","name","epoch","organizer","country","city","zipcode","street","housenumber"]
+    for event in allEvents:
+        evlist = list(event)
+        for index, key in enumerate(keys):
+            ret += "&nbsp;" * 4  # 4 Leerzeichen anstatt ein Tab
+            ret += f"{key}: {evlist[index]}<br>"
+        ret += "<br><br>"
+    return ret
 
-# TODO
+# TODO. Der Unterschied zwischen /allevents und /events, ist dass /events die
+# Events für den zur Zeit angemeldeten Nutzer anzegit, anstatt ALLE Events
 @app.route("/events")
 def events():
     raise NotImplementedError()
 
-# TODO
-@app.route("/createevent")
+# TODO!!! Daten aus Form in einen eventmanager.Event packen und dann speichern
+@app.route("/createevent", methods=["GET", "POST"])
 def createevent():
-    raise NotImplementedError()
+    if flask.request.method == "GET":
+        return flask.render_template("createevent.html")
+    form: dict[str, str] = flask.request.form
+    # * Notiz: Das datetime-local input wird in ISO 8601 ohne Zeitzonen übergeben.
+    # * D.h. Das Datum wird als "yyyy-mm-ddThh:mm" gespeichert.
+    # * Anscheinend ist das T nur als Trennung da
+
+    datetime: time.struct_time = time.strptime(form["date"], "%Y-%m-%dT%H:%M")
+    epoch: float = float(time.mktime(datetime))
+    return ":)"
 
 # TODO
 @app.route("/deleteevent")

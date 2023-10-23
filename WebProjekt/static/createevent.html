@@ -1,14 +1,33 @@
 <!DOCTYPE html>
-<html>
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Create Events</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
 </head>
 <body>
-	<!--organizer, country, city, zipcode, street, housenumber-->
-	<form action="createvent", method="post">
-		<input type="text" name="name">
-	</form>
+    <!--"id","name","epoch","organizer","country","city","zipcode","street","housenumber"-->
+    <form action="createvent" method="post">
+        <div class="date">
+            <label for="datetime">Datum und Uhrzeit: </label><input type="datetime-local" name="datetime" id="datetime">
+        </div>
+        <div class="input">
+            <label for="country">Land: </label><input type="text" name="country" id="country">
+        </div>
+        <div class="input">
+            <label for="city">Stadt: </label><input type="text" name="city" id="city">
+        </div>
+        <div class="input">
+            <label for="zipcode">Postleitzahl: </label><input type="number" name="zipcode" id="zipcode">
+        </div>
+        <div class="input">
+            <label for="street">Strasse: </label><input type="text" name="street" id="street">
+        </div>
+        <div class="input">
+            <label for="housenumber">Hausnummer: </label><input type="text" name="housenumber" id="housenumber">
+        </div>
+        <div class="submit">
+            <input type="submit" id="submit" name="submit" value="Event erstellen">
+        </div>
+    </form>
 </body>
 </html>
