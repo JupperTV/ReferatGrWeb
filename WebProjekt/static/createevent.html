@@ -2,11 +2,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Create an Event</title>
 </head>
 <body>
     <!--"id","name","epoch","organizer","country","city","zipcode","street","housenumber"-->
-    <form action="createvent" method="post">
+    <form action="createevent" method="post">
+        <div class="input">
+            <label for="eventname">Eventname: </label><input type="text" name="eventname" id="eventname">
+        </div>
         <div class="date">
             <label for="datetime">Datum und Uhrzeit: </label><input type="datetime-local" name="datetime" id="datetime">
         </div>

@@ -17,14 +17,17 @@ _UNSUCCESFUL_MATCH = None
 _CSV_PATH: Final[str] = "data"
 _CSV_ACCOUNT: Final[str] = f"{_CSV_PATH}\\accounts.csv"
 
-__all__ = ["PasswordsAreEqual", "AddRegistration", "UserExists", "LoginIsValid",
-           "EmailIsValid", "PasswordIsValid"]
 
+# TODO
 class Account:
-    def __init__(accountid, email, base64password,
+    def __init__(self, accountid, email, base64password,
                  firstname, lastname):
         """Alle Parameter sind vom Typ int"""
-        raise NotImplementedError()
+        self.accountid = accountid
+        self.email = email
+        self.password = base64password
+        self.firstname = firstname
+        self.lastname = lastname
 
 def _obfuscateText_(text: bytes) -> bytes:
     if type(text) is str:
@@ -32,6 +35,7 @@ def _obfuscateText_(text: bytes) -> bytes:
         text = bytes(text, encoding="unicode")
     return b64encode(text)
 
+# TODO
 def _getreader_() -> Iterable[list[str]]:
     return NotImplementedError()
 
@@ -58,7 +62,6 @@ def GetEmailFromToken(token: str) -> str | None:
     accountfile_read.close()
     return None
 
-
 def LoginIsValid(email: str, originalpassword: str) -> bool:
     accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
     reader: Iterable[dict] = csv.DictReader(accountfile_read, delimiter=",")
@@ -78,8 +81,8 @@ def PasswordsAreEqual(originalpassword: str, obfuscatedpassword: str) -> bool:
 def UserExists(email: str) -> bool:
     reader = csv.reader(open(_CSV_ACCOUNT, "r"), delimiter=",")
     # Skip first line because it's just headers
-    for line in list(reader)[1:]:
-        if email in line:
+    for row in list(reader)[1:]:
+        if email in row:
             return True
     return False
 
@@ -93,7 +96,6 @@ def EmailIsValid(email: str) -> bool:
     if emailmatch == _UNSUCCESFUL_MATCH:
         return False
     return True
-
 
 def AddRegistration(email: str, password: str,
                     firstname: str, lastname: str) -> None:
@@ -133,3 +135,4 @@ def AddRegistration(email: str, password: str,
     passwordToSave = _obfuscateText_(bytes(password,"unicode_escape")).decode()
     writer.writerow([accountid, email, passwordToSave, firstname, lastname])
     accountfile_write.close()
+

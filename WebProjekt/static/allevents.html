@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alle Events</title>
+</head>
+<body>
+    <div class="header" style="margin: auto;width: 50%;padding: 10px;text-align: center;">
+        <h1>Alle Events</h1>
+    </div>
+    <div class="wholeevent" style="margin-bottom: 3%;">
+        {% for event in eventmanager.GetAllEvents() %}
+        <div class="event" style="border-color:black;"> 
+            {% for index, key in enum %}
+            {{ key }}: {{ event[index] }}
+            {% endfor %}
+        </div>
+        <input type="button" value="Zum Event eintragen" id="{{ event.id }}" name="{{ event.id }}">
+        {% endfor %}
+    </div>
+</body>
+</html>
