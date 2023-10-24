@@ -33,7 +33,8 @@ class Event:
             self.eventid, self.eventname, self.epoch, self.organizer,
             self.country, self.city, self.zipcode, self.street, self.housenumber])
 
-KEYS = ["eventid", "eventname", "epoch", "organizer", "country", "citry", "zipcode", "street", "housenumber"]
+KEYS_DE = ["Eventnummer", "Eventname", "Zeit in Epoch", "Email des Veranstalters",
+        "Land", "Stadt", "PLZ", "Strasse", "Hausnummer"]
 
 _CSV_PATH: Final[str] = "data"
 _CSV_EVENT: Final[str] = f"{_CSV_PATH}\\events.csv"
@@ -43,9 +44,7 @@ def _getcsvreader_() -> Iterable[list[str]]:
     eventfile_read = open(_CSV_EVENT, "r", newline="")
     return csv.reader(eventfile_read, delimiter=",")
 
-
-# TODO: Test
-def GetAllEvents() -> list[Event]:  # * Replace tuple with the Entry Class???
+def GetAllEvents() -> list[Event]:  # Event mit TypedDict ersetzen?
     reader = list(filter(None, list(_getcsvreader_())))  # Filtere zuerst leere Listen aus
     allEvents: list[Event] = []
     if len(reader) < 2 or not reader[1]:
@@ -54,17 +53,6 @@ def GetAllEvents() -> list[Event]:  # * Replace tuple with the Entry Class???
         allEvents.append(Event.InitFromList(row))  # row[0] ist die id, was nicht angezeigt werden soll
     return allEvents
 
-# TODO: Test
-def GetEventsByName(name: str) -> list[Event]:  # * Replace tuple with the Entry Class???
-    """Get all of the events that have the same name"""
-    reader = _getcsvreader_()
-    allEvents: list[Event] = []
-    for row in reader:
-        if (row) and (name in row):  # ```if row``` == row ist nicht leer
-            allEvents.append(Event.InitFromList(row))
-    return allEvents
-
-# TODO: Test
 def EventExists(event: Event) -> bool:
     reader: Iterable = _getcsvreader_()
     next(reader)  # Überspringe Header
@@ -73,7 +61,15 @@ def EventExists(event: Event) -> bool:
             return True
     return False
 
-# TODO: Test
+
+def GetEventFromId(eventid) -> Event | None:
+    reader: Iterable[str] = _getcsvreader_()
+    next(reader)  # Überspringe Header
+    for row in reader:
+        if eventid == row[0]:
+            return Event.InitFromList()
+    return None
+
 def CreateEventFromForm(eventname, epoch: float, organizeremail, country, city,
                         zipcode: str, street, housenumber: str) -> None:
     eventid = uuid.uuid4()
@@ -82,8 +78,6 @@ def CreateEventFromForm(eventname, epoch: float, organizeremail, country, city,
                     organizer=organizeremail, country=country, city=city,
                     zipcode=zipcode, street=street, housenumber=housenumber))
 
-
-# TODO: Test
 def SaveEvent(event: Event) -> None:
     if EventExists(event):
         raise errors.EventAlreadyExistsError()
@@ -91,8 +85,10 @@ def SaveEvent(event: Event) -> None:
     writer = csv.writer(eventfile_read, delimiter=",")
     writer.writerow(list(event))
 
+# TODO
 def ModifyEvent():
     return NotImplementedError()
 
+# TODO
 def DeleteEvent():
     return NotImplementedError()

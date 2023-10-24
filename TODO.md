@@ -4,9 +4,10 @@
 - [x] Login
 - [x] Entscheiden, ob ich **for row in reader** oder ~~for line in reader~~ benutze
 - [x] **Eventersteller**
-- [ ] Entry-System
-- [ ] Alle POST-Requests sollen zur selben Seite gehen und nicht zu Seiten mit anderen Namen. Z.B. ```/register``` -> ```/register``` anstatt ```/register``` -> ```/finishregister```
+- [x] Entry-System
+- [x] logoff
 - [ ] Event anseher
+- [ ] Alle POST-Requests sollen zur selben Seite gehen und nicht zu Seiten mit anderen Namen. Z.B. ```/register``` -> ```/register``` anstatt ```/register``` -> ```/finishregister```
 - [ ] Event umänderer
 - [ ] Account Umänderer
 - [ ] Passwort änderer

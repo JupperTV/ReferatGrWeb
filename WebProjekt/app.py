@@ -18,22 +18,20 @@ app = flask.Flask(__name__, static_folder="static", template_folder="static")
 
 COOKIE_NAME_LOGIN_TOKEN: Final[str] = "FranzWebProj"
 
-# region GET-ers
 @app.route("/", methods=["GET"])
 def root():
     return flask.redirect(flask.url_for("index"))
 
 @app.route("/index", methods=["GET"])
 def index():
-    token: str = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
     return flask.render_template("index.html")
 
 # TODO
 @app.route("/dashboard", methods=["GET"])
 def dashboard():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
-    if not token:  # Benutzer is nicht eingeloggt
-        return flask.redirect(flask.url_for("index"))
+    # if not token:  # Benutzer is nicht eingeloggt
+    #     return flask.redirect(flask.url_for("index"))
     email: str | None = accountmanager.GetEmailFromToken(token)
     return f"Dashboard von {email}"
 
@@ -46,7 +44,13 @@ def register():
 @app.route("/login", methods=["GET"])
 def login():
     return flask.render_template("login.html")
-# endregion
+
+@app.route("/logout", methods=["GET"])
+def logout():
+    
+    resp = flask.Response("Succesfully logged out")
+    resp.delete_cookie(COOKIE_NAME_LOGIN_TOKEN)
+    return resp
 
 # DONE
 @app.route("/finishregister", methods=["GET", "POST"])
@@ -89,26 +93,35 @@ def checklogin():
                         value=accountmanager.GetUserToken(form["email"]))
     return response
 
-# TODO: Rendere static/allevents.html anstatt so mit strings
+
 @app.route("/allevents")
 def allevents():
     allEvents: list[eventmanager.Events] = eventmanager.GetAllEvents()
     if not allEvents:
         return "No Events :("
-    # ret = ""
+    scriptIfRedirect = ""
+    # isredirect is set on /createentry if entrymanager.DidAccountAlreadyEnter
+    if flask.request.args.get("isredirect"):
+        print("TRUE")
+        scriptIfRedirect = "<script>alert('You have already entered the event')</script>"
+    return flask.render_template("allevents.html", eventmanager=eventmanager,
+                                 enumerate=enumerate, list=list).replace(
+                                     "<body>", "<body>"+scriptIfRedirect
+                                     )
 
-    # keys = ["id","name","epoch","organizer","country","city","zipcode","street","housenumber"]
-    # for event in allEvents:
-    #     evlist = list(event)
-    #     for index, key in enumerate(keys):
-    #         ret += "&nbsp;" * 4  # 4 Leerzeichen anstatt ein Tab
-    #         ret += f"{key}: {evlist[index]}<br>"
-    #     ret += "<br><br>"
-    # return ret
-    return flask.render_template("allevents.html", eventmanager=eventmanager, enum=enumerate(eventmanager.KEYS))
+@app.route("/createentry", methods=["POST"])
+def createentry():
+    # The only item in the form is the button
+    # which contains the eventid in its name
+    accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
+    eventid = list(flask.request.form.keys())[0]
+    if entrymanager.DidAccountAlreadyEnter(accountid, eventid):
+        print(True)
+        return flask.redirect(flask.url_for("allevents", isredirect=True))
+    entrymanager.CreateEntry(accountid, eventid)
+    return ":)"
 
-# TODO. Der Unterschied zwischen /allevents und /events, ist dass /events die
-# Events für den zur Zeit angemeldeten Nutzer anzegit, anstatt ALLE Events
+# TODO Events für den zur Zeit angemeldeten Nutzer anzeigen
 @app.route("/events")
 def events():
     raise NotImplementedError()
@@ -120,11 +133,12 @@ def createevent():
         return flask.render_template("createevent.html")
     form: dict[str, str] = flask.request.form
     # * Notiz: Das datetime-local input ist im ISO 860-Format
-    # * Trotzdem gibt das datetime-local keine Zeitzone zurück.
+    # * Trotzdem gibt das datetime objekt keine Zeitzone zurück.
     # * D.h. Das Datum wird als "yyyy-mm-ddThh:mm" gespeichert.
     # (Anscheinend ist das T nur als Trennung da)
 
     f = lambda s: form[s]
+    # region getitems from form
     datetime: time.struct_time = time.strptime(f("datetime"), "%Y-%m-%dT%H:%M")
     eventname = f("eventname")
     epoch: float = float(time.mktime(datetime))
@@ -135,6 +149,7 @@ def createevent():
     housenumber: str = f("housenumber")
     organizertoken = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
     organizeremail = accountmanager.GetEmailFromToken(organizertoken)
+    # endregion
 
     eventmanager.CreateEventFromForm(
             eventname=eventname, epoch=epoch, organizeremail=organizeremail,
@@ -142,13 +157,6 @@ def createevent():
             housenumber=housenumber
     )
     return f"Das Event '{eventname}' wurde von dir mit der Email {organizeremail} erstellt"
-
-# ! TODO
-@app.route("/createentry")
-def createentry():
-    token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
-    entrymanager.CreateEntry(token)
-    raise NotImplementedError()
 
 # TODO
 @app.route("/deleteevent")
@@ -159,7 +167,9 @@ def deleteevent():
 @app.before_request
 def checkIfUserIsLoggedIn():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
-    if not token:  # Benutzer is nicht eingeloggt
+    allowedSitesIfNotLoggedIn: list[str] = ["index", "register", "login",
+                                            "checklogin", "finishregister"]
+    if (not token) and (flask.request.endpoint not in allowedSitesIfNotLoggedIn):
         return flask.redirect(flask.url_for("index"))
     # return nothing and continue to the requested site
 
