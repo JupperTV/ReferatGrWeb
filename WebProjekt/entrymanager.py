@@ -25,7 +25,7 @@ class Entry:
 _CSV_PATH: Final[str] = "data"
 _CSV_ENTRY: Final[str] = f"{_CSV_PATH}\\entries.csv"
 
-def _getreader_() -> csv._reader:
+def _getreader_() -> Iterable[list[str]]:
     entryfile_read = open(_CSV_ENTRY, "r", newline="")
     return csv.reader(entryfile_read, delimiter=",")
 
@@ -46,19 +46,15 @@ def DidAccountAlreadyEnter(accountid, eventid) -> bool:
             return True
     return False
 
-def GetAllEntriedEventsOfAccount(accountid):
+def GetAllEntriedEventsOfAccount(accountid) -> list[eventmanager.Event]:
     events: list[eventmanager.Event] = eventmanager.GetAllEvents()
     reader: csv._reader = _getreader_()
     next(reader)  # Skip Header
-    entriedevents: list = []
+    entriedevents: list[eventmanager.Event] = []
     for row in reader:
-        if row[1] == accountid:
+        if row and row[1] == accountid:
             entriedevents.append(eventmanager.GetEventFromId(row[2]))
-        pass
-    return NotImplementedError()
-
-def SendMessageToEntries(message: str, eventid: int):
-    raise NotImplementedError("Sende eine Nachricht (z.B. Erinnerung) an alle Accounts, die sich zu dem Event angemeldet haben")
+    return entriedevents
 
 # Eine Entry muss, von aus logischer Sicht her, nicht modifiziert werden
 

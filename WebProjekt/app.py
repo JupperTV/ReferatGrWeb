@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-from os import system # ! NOTIZ: NACHHER LÖSCHEN
+# ! NACHHER LÖSCHEN
+from os import system
 system("cls")
 del system
 
@@ -47,7 +48,7 @@ def login():
 
 @app.route("/logout", methods=["GET"])
 def logout():
-    
+
     resp = flask.Response("Succesfully logged out")
     resp.delete_cookie(COOKIE_NAME_LOGIN_TOKEN)
     return resp
@@ -65,11 +66,13 @@ def finishregister():
         return "The passwords are not the same"
 
     try:
-        accountmanager.AddRegistration(form["email"], form["password"], form["firstname"], form["lastname"])
+        accountmanager.AddRegistration(form["email"], form["password"],
+                                       form["firstname"], form["lastname"])
     except errors.AccountAlreadyExistsError:
         return "There is already an account registered with that email"
 
-    response: flask.Response = flask.make_response(f"Your email is now registered and you are logged in as {form["email"]}")
+    msg = f"Your email is now registered and you are logged in as {form["email"]}"
+    response: flask.Response = flask.make_response(msg)
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
                         value=accountmanager.GetUserToken(form["email"]))
     return response
@@ -88,7 +91,8 @@ def checklogin():
     if not accountmanager.LoginIsValid(form["email"], form["password"]):
         return "Wrong password"
 
-    response: flask.Response = flask.make_response(f"You are now logged in as {form["email"]}")
+    msg = f"You are now logged in as {form["email"]}"
+    response: flask.Response = flask.make_response(msg)
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
                         value=accountmanager.GetUserToken(form["email"]))
     return response
@@ -111,8 +115,8 @@ def allevents():
 
 @app.route("/createentry", methods=["POST"])
 def createentry():
-    # The only item in the form is the button
-    # which contains the eventid in its name
+    # Das einzige, dass im Form übergeben wird, ist der button,
+    # ist der Button, der die eventid in seinem Namen hat
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
     eventid = list(flask.request.form.keys())[0]
     if entrymanager.DidAccountAlreadyEnter(accountid, eventid):
@@ -120,11 +124,6 @@ def createentry():
         return flask.redirect(flask.url_for("allevents", isredirect=True))
     entrymanager.CreateEntry(accountid, eventid)
     return ":)"
-
-# TODO Events für den zur Zeit angemeldeten Nutzer anzeigen
-@app.route("/events")
-def events():
-    raise NotImplementedError()
 
 # Done
 @app.route("/createevent", methods=["GET", "POST"])
@@ -158,12 +157,26 @@ def createevent():
     )
     return f"Das Event '{eventname}' wurde von dir mit der Email {organizeremail} erstellt"
 
+# TODO Events für den zur Zeit angemeldeten Nutzer anzeigen
+@app.route("/events")
+def events():
+    accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
+    events: list[eventmanager.Event] = entrymanager.GetAllEntriedEventsOfAccount(accountid)
+    return flask.render_template(
+            "entriedevents.html", events=events, enumerate=enumerate,
+            eventmanager=eventmanager, list=list)
+
 # TODO
-@app.route("/deleteevent")
-def deleteevent():
+@app.route("/deleteentry", methods=["POST"])
+def deleteent():
+    return ":)"
     raise NotImplementedError()
 
 # TODO
+@app.route("/deleteevent", methods=["POST"])
+def deleteevent():
+    raise NotImplementedError()
+
 @app.before_request
 def checkIfUserIsLoggedIn():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)

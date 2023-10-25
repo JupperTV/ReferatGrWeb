@@ -6,11 +6,14 @@
 - [x] **Eventersteller**
 - [x] Entry-System
 - [x] logoff
-- [ ] Event anseher
+- [x] Event anseher
+- [ ] Entry löscher
+- [ ] Event löscher
+- [ ] Eventbeschreibung
 - [ ] Alle POST-Requests sollen zur selben Seite gehen und nicht zu Seiten mit anderen Namen. Z.B. ```/register``` -> ```/register``` anstatt ```/register``` -> ```/finishregister```
-- [ ] Event umänderer
+- [ ] Event Umänderer
 - [ ] Account Umänderer
-- [ ] Passwort änderer
+- [ ] Passwort Umänderer
 - [ ] Home-Screen
-- [ ] Kleine Verschönerung
+- [ ] Kleine CSS Verschönerung
 - [ ] Eventuell Docker anbindung, dass mit verschiedenen Versionen getestet wird?

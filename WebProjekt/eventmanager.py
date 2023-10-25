@@ -13,11 +13,13 @@ import errors
 # TODO: Test
 class Event:
     def InitFromList(elements: list[str]):
-        if len(elements) < 9:
+        if len(elements) < 9:  # In der Zukunft + 1 für die Beschreibung
             raise errors.NotEnoughElementsInListError()
         return Event(*elements)
 
-    def __init__(self, eventid, eventname, epoch, organizer, country, city, zipcode, street, housenumber):
+    def __init__(self, eventid: str, eventname: str, epoch: str,
+                 organizer: str, country: str, city: str, zipcode: str,
+                 street: str, housenumber: str):
         self.eventid = eventid
         self.eventname = eventname
         self.epoch = epoch
@@ -27,14 +29,17 @@ class Event:
         self.zipcode = zipcode
         self.street = street
         self.housenumber = housenumber
+        # self.description = description
 
     def __iter__(self):
         return iter([
             self.eventid, self.eventname, self.epoch, self.organizer,
-            self.country, self.city, self.zipcode, self.street, self.housenumber])
+            self.country, self.city, self.zipcode, self.street,
+            self.housenumber])
 
-KEYS_DE = ["Eventnummer", "Eventname", "Zeit in Epoch", "Email des Veranstalters",
-        "Land", "Stadt", "PLZ", "Strasse", "Hausnummer"]
+KEYS_DE = ["Eventnummer", "Eventname", "Zeit in Epoch",
+           "Email des Veranstalters", "Land", "Stadt", "PLZ", "Strasse",
+           "Hausnummer"]
 
 _CSV_PATH: Final[str] = "data"
 _CSV_EVENT: Final[str] = f"{_CSV_PATH}\\events.csv"
@@ -67,7 +72,7 @@ def GetEventFromId(eventid) -> Event | None:
     next(reader)  # Überspringe Header
     for row in reader:
         if eventid == row[0]:
-            return Event.InitFromList()
+            return Event.InitFromList(row)
     return None
 
 def CreateEventFromForm(eventname, epoch: float, organizeremail, country, city,
