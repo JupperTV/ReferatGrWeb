@@ -1,4 +1,4 @@
-b<!DOCTYPE html>
+<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=2.0">
@@ -18,8 +18,8 @@ b<!DOCTYPE html>
                 {% endfor %}
             </div>
         </div>
-        <form action="/deleteentry" method="post" >
-            <input type="submit" value="Eintrag löschen" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
+        <form action="/deleteevent" method="post" >
+            <input type="submit" value="Event löschen" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
         </form>
     </div>
     {% endfor %}

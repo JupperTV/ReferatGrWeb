@@ -14,3 +14,11 @@ class NotEnoughElementsInListError(Exception):
     def __init__(*args):
         super().__init__("Es gibt nicht genug Elemente in der Liste", *args)
 
+class AccountHasNoEntriesError(Exception):
+    def __init__(*args):
+        super().__init__("Der Account hat keine Einträge für Events", *args)
+
+class AccountHasNoEventsError(Exception):
+    def __init__():
+        super().__init__("Der Account hat keine Events erstellt", *args)
+

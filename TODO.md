@@ -7,13 +7,14 @@
 - [x] Entry-System
 - [x] logoff
 - [x] Event anseher
-- [ ] Entry löscher
-- [ ] Event löscher
-- [ ] Eventbeschreibung
-- [ ] Alle POST-Requests sollen zur selben Seite gehen und nicht zu Seiten mit anderen Namen. Z.B. ```/register``` -> ```/register``` anstatt ```/register``` -> ```/finishregister```
-- [ ] Event Umänderer
+- [x] Entry löscher
+- [x] Event löscher
+- [x] Eventbeschreibung
+- [ ] **Alle POST-Requests sollen zur selben Seite gehen und nicht zu Seiten mit anderen Namen. Z.B. ```/register``` -> ```/register``` anstatt ```/register``` -> ```/finishregister```**
+- [ ] **Event Umänderer**
+- [ ] Seperate html für /allevents machen, aber ohne Eintragen Knopf
 - [ ] Account Umänderer
 - [ ] Passwort Umänderer
-- [ ] Home-Screen
+- [ ] Dashboard mit Buttons zu allen Events und Entries
 - [ ] Kleine CSS Verschönerung
-- [ ] Eventuell Docker anbindung, dass mit verschiedenen Versionen getestet wird?
+

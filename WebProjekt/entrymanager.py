@@ -10,6 +10,7 @@ import uuid
 
 import accountmanager
 import eventmanager
+import errors
 
 class Entry:
     def __init__(self, entryid, account: accountmanager.Account,
@@ -33,7 +34,7 @@ def CreateEntry(accountid: int, eventid: int) -> None:
     entryfile_writer = open(_CSV_ENTRY, "a", newline="")
     writer = csv.writer(entryfile_writer, delimiter=",")
     entryid = uuid.uuid4()  # Random uuid
-    #writer.writerow(list(Entry())) # TODO
+
     writer.writerow([entryid, accountid, eventid])
 
 def DidAccountAlreadyEnter(accountid, eventid) -> bool:
@@ -46,18 +47,47 @@ def DidAccountAlreadyEnter(accountid, eventid) -> bool:
             return True
     return False
 
-def GetAllEntriedEventsOfAccount(accountid) -> list[eventmanager.Event]:
+def GetAllEntriedEventsOfAccount(accountid) -> list[eventmanager.Event] | None:
     events: list[eventmanager.Event] = eventmanager.GetAllEvents()
-    reader: csv._reader = _getreader_()
-    next(reader)  # Skip Header
+    reader: list[list[str]] = list(_getreader_())
+    if not reader[1:]:
+        return None
     entriedevents: list[eventmanager.Event] = []
-    for row in reader:
+    for row in reader[1:]:
         if row and row[1] == accountid:
             entriedevents.append(eventmanager.GetEventFromId(row[2]))
     return entriedevents
 
-# Eine Entry muss, von aus logischer Sicht her, nicht modifiziert werden
+def DeleteAllEntriesWithEvent(eventid) -> None:
+    events: list[eventmanager.Event] = eventmanager.GetAllEvents()
+    reader = list(_getreader_())
+    rowstoremove: list[list[str]] = []
+    if not reader[1:]:  # CSV enthält nur Header
+        raise erros.AccountHasNoEntriesError()
+    for row in reader[1:]:
+        if row[2] == eventid:
+            rowstoremove.append(row)
+    for row in rowstoremove:
+        reader.remove(row)
+    # ! Important Note: The file will be completely deleted after this
+    # ! The fille will be completely rewriten
+    csvfile = open(_CSV_ENTRY, "w", newline="")
+    writer = csv.writer(csvfile, delimiter=",")
+    writer.writerows(reader)
 
-def DeleteEntry(accountid: int, eventid: int):
-    raise NotImplementedError("Lösche eine Zeile in entries.csv")
+def DeleteEntry(accountid: int, eventid: int) -> None:
+    reader = list(_getreader_())
+    rowtoremove: list[str] = []
+    if not reader[1:]:
+        raise erros.AccountHasNoEntriesError("Nur Header")
+    for row in reader[1:]:
+        if row[1] == accountid and row[2] == eventid:
+            rowtoremove = row
+            break
+    reader.remove(rowtoremove)
+    # ! Important Note: The file will be completely deleted after this
+    # ! We will completely rewrite it
+    csvfile = open(_CSV_ENTRY, "w", newline="")
+    writer = csv.writer(csvfile, delimiter=",")
+    writer.writerows(reader)
 
