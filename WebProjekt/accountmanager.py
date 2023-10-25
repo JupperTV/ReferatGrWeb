@@ -18,16 +18,25 @@ _CSV_PATH: Final[str] = "data"
 _CSV_ACCOUNT: Final[str] = f"{_CSV_PATH}\\accounts.csv"
 
 
-# TODO
 class Account:
-    def __init__(self, accountid, email, base64password,
-                 firstname, lastname):
-        """Alle Parameter sind vom Typ int"""
+    def __init__(self, accountid: str, email: str, base64password: str,
+                 firstname: str, lastname: str):
         self.accountid = accountid
         self.email = email
         self.password = base64password
         self.firstname = firstname
         self.lastname = lastname
+
+class CSVHeader:
+    ACCOUNTID: Final[str] = "id"
+    EMAIL: Final[str] = "email"
+    PASSWORD: Final[str] = "password"
+    FIRSTNAME: Final[str] = "firstname"
+    LASTNAME: Final[str] = "lastname"
+
+
+def _getdictreader_():
+    pass
 
 def _obfuscateText_(text: bytes) -> bytes:
     if type(text) is str:
@@ -35,79 +44,77 @@ def _obfuscateText_(text: bytes) -> bytes:
         text = bytes(text, encoding="unicode")
     return b64encode(text)
 
-# TODO
-def _getreader_() -> Iterable[list[str]]:
-    return NotImplementedError()
-
-# * id in accounts.csv == token in cookie
-def GetUserToken(email: str) -> bool:
+# TODO: Test
+def GetFullNameOfAccount(email: str):
     accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
-    reader: list[list] = list(csv.reader(accountfile_read, delimiter=","))
-    for row in reader[1:]:
+    reader: Iterable[dict] = csv.reader(accountfile_read, delimiter=",")
+    for row in reader:
+        if row[1] == email:
+            return f"{row[3]} {row[4]}"
+
+# TODO: Test
+# * id in accounts.csv == token im cookie
+def GetUserToken(email: str) -> bool:
+    # accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
+    # reader: list[list] = csv.reader(accountfile_read, delimiter=",")
+    reader = _getdictreader_()
+    for row in reader:
         if not row:  # if row is empty go to the next line
             continue
         if row[1] == email:
-            accountfile_read.close()
             return row[0]
-    accountfile_read.close()
     raise errors.EmailIsNotRegisteredError()
 
+# TODO: Test
 def GetEmailFromToken(token: str) -> str | None:
-    accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
-    reader: list[dict] = list(csv.DictReader(accountfile_read, delimiter=","))
+    # accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
+    # reader: list[dict] = list(csv.DictReader(accountfile_read, delimiter=","))
+    reader = _getdictreader_()
     for row in reader:
         if row["id"] == token:
-            accountfile_read.close()
             return row["email"]
-    accountfile_read.close()
     return None
 
+# TODO: Test
 def LoginIsValid(email: str, originalpassword: str) -> bool:
-    accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
-    reader: Iterable[dict] = csv.DictReader(accountfile_read, delimiter=",")
+    # accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
+    # reader: Iterable[dict] = csv.DictReader(accountfile_read, delimiter=",")
+    reader = _getdictreader_()
     for row in reader:
         # Don't check passwords until emails are the same
         if row["email"] != email:
             continue
         if PasswordsAreEqual(originalpassword, row["password"]):
-            accountfile_read.close()
             return True
-    accountfile_read.close()
     return False
 
 def PasswordsAreEqual(originalpassword: str, obfuscatedpassword: str) -> bool:
     return originalpassword == b64decode(obfuscatedpassword).decode()
 
+# TODO: Test
 def UserExists(email: str) -> bool:
-    reader = csv.reader(open(_CSV_ACCOUNT, "r"), delimiter=",")
-    # Skip first line because it's just headers
-    for row in list(reader)[1:]:
+    # reader = csv.reader(open(_CSV_ACCOUNT, "r"), delimiter=",")
+    reader = _getdictreader_()
+    for row in reader:
         if email in row:
             return True
     return False
 
+# TODO: In Zukunft noch verbessern?
 def PasswordIsValid(password: str) -> bool:
     if not password:
         return False
     return True
 
 def EmailIsValid(email: str) -> bool:
-    emailmatch: re.Match = re.fullmatch(_REGEX_VALID_EMAIL, email)
-    if emailmatch == _UNSUCCESFUL_MATCH:
-        return False
-    return True
+    return re.fullmatch(_REGEX_VALID_EMAIL, email) != _UNSUCCESFUL_MATCH
 
-def AddRegistration(email: str, password: str,
-                    firstname: str, lastname: str) -> None:
-    if None in [email, password, firstname, lastname]:
-        raise ValueError("Einer der Parameter ist `None`")
-    if not firstname:
-        raise ValueError("Der Vorname ist nicht gültig")
-    if not lastname:
-        raise ValueError("Der Nachname ist nicht gültig")
-    if not PasswordIsValid(password):
+# TODO: Test
+# def SaveInCSV(email: str, password: str, firstname: str, lastname: str) -> None:
+def SaveInCSV(account: Account) -> None:
+    if not PasswordIsValid(account.password):
         raise ValueError("Password ist nicht gültig")
-    if not EmailIsValid(email):
+    if not EmailIsValid(account.email):
         raise ValueError("E-Mail Adresse ist nicht gültig")
 
     # * Komisches Python verhalten:
@@ -120,19 +127,22 @@ def AddRegistration(email: str, password: str,
     # stehen würde.
     # Quellen:
     # - https://stackoverflow.com/a/3348664
-    # - https://docs.python.org/3/library/csv.html?highlight=csv.writer#id3
-    accountfile_read = open(_CSV_ACCOUNT, "r", newline='')
-    reader: csv._reader = csv.reader(accountfile_read, delimiter=",")
+    # - Fußnote in https://docs.python.org/3/library/csv.html?highlight=csv.writer#id3
+    # accountfile_read = open(_CSV_ACCOUNT, "r", newline='')
+    # reader: csv._reader = csv.reader(accountfile_read, delimiter=",")
+    reader = _getdictreader_()
 
     for row in reader:
-        if email in row:
+        if account.email in row.get(CSVHeader.EMAIL):
             raise errors.AccountAlreadyExistsError()
-    accountfile_read.close()
 
     accountid = uuid.uuid4()  # Zufällige UUID
     accountfile_write = open(_CSV_ACCOUNT, "a", newline='')
-    writer = csv.writer(accountfile_write, delimiter=",")
-    passwordToSave = _obfuscateText_(bytes(password,"unicode_escape")).decode()
-    writer.writerow([accountid, email, passwordToSave, firstname, lastname])
+    writer = csv.DictWriter(accountfile_write, delimiter=",")
+    passwordToSave = _obfuscateText_(bytes(account.password, "unicode_escape")).decode()
+    writer.writerow([accountid, account.email, passwordToSave, account.firstname, account.lastname])
     accountfile_write.close()
 
+# TODO
+def RemoveAccount():
+    pass

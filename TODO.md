@@ -3,18 +3,21 @@
 - [x] Registrierung
 - [x] Login
 - [x] Entscheiden, ob ich **for row in reader** oder ~~for line in reader~~ benutze
-- [x] **Eventersteller**
+- [x] Eventersteller
 - [x] Entry-System
 - [x] logoff
 - [x] Event anseher
 - [x] Entry löscher
 - [x] Event löscher
 - [x] Eventbeschreibung
-- [ ] **Alle POST-Requests sollen zur selben Seite gehen und nicht zu Seiten mit anderen Namen. Z.B. ```/register``` -> ```/register``` anstatt ```/register``` -> ```/finishregister```**
-- [ ] **Event Umänderer**
-- [ ] Seperate html für /allevents machen, aber ohne Eintragen Knopf
+- [x] Alle POST-Requests sollen zur selben Seite gehen und nicht zu Seiten mit anderen Namen
+- [x] Im /events HTML knöpfe für nicht-login ausmachen
+- [x] Dashboard mit Buttons zu allen Events und Entries
+- [ ] **CODE REFACTORING MIT _getdictreader_() UND KLASSEN FÜR DIE MANAGER**
+- [ ] 2 Typen von Events (Online, Lokal)
+- [ ] Event Umänderer
+- [ ] DictReader (und evtl. DictWriter) benutzen
+- [ ] "Zurück zum Dashboard"-Knopf nach jedem POST-Request zeigen
 - [ ] Account Umänderer
 - [ ] Passwort Umänderer
-- [ ] Dashboard mit Buttons zu allen Events und Entries
 - [ ] Kleine CSS Verschönerung
-

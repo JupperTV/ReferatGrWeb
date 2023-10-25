@@ -6,6 +6,53 @@
     <title>Dashboard</title>
 </head>
 <body>
-    
+    <style>.text{font-family: Arial, Helvetica, sans-serif} .header{font-family: Arial;}</style>
+    <h1 style="margin: auto;width: 50%;padding: 10px;text-align: center;">Dashboard von {{ email }}</h1>
+
+    <style>
+        .buttons{
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .button{
+            /* border: 5px; */
+            margin: 5px;
+        }
+    </style>
+    <!-- <div class="flexbox-wrap-container" style="display:flex; flex-wrap: wrap; justify-content:center; text-align: center; gap:10px"> -->
+    <div class="buttons">
+        <form action="/login" method="get">
+            <div class="button">
+                <input type="submit" value="In einen anderen Account einloggen">
+            </div>
+        </form>
+        <form action="/logout" method="get">
+            <div class="button">
+                <input type="submit" value="Ausloggen">
+            </div>
+        </form>
+        <form action="/events" method="get">
+            <div class="button">
+                <input type="submit" value="Events ansehen und eintragen">
+            </div>
+        </form>
+        <form action="/createevent" method="get">
+            <div class="button">
+                <input type="submit" value="Neues Event erstellen">
+            </div>
+        </form>
+        <form action="/entries" method="get">
+            <div class="button">
+                <input type="submit" value="Eingetragene Events">
+            </div>
+        </form>
+        <form action="/myevents" method="get">
+            <div class="button">
+                <input type="submit" value="Von dir Erstellte Events">
+            </div>
+        </form>
+    </div>
 </body>
 </html>

@@ -12,82 +12,102 @@ import accountmanager
 import eventmanager
 import errors
 
-class Entry:
-    def __init__(self, entryid, account: accountmanager.Account,
-                event: eventmanager.Event):
-        self.entryid = entryid
-        self.account = account
-        self.event = event
-
-    def __iter__(self):
-        return iter([self.entryid, self.account.accountid, self.event.eventid])
-
-
 _CSV_PATH: Final[str] = "data"
 _CSV_ENTRY: Final[str] = f"{_CSV_PATH}\\entries.csv"
 
-def _getreader_() -> Iterable[list[str]]:
+# Statische Variablen in einer Klasse für besserer lesbarkeit
+class CSVHeader:
+    ENTRYID: Final[str] = "id"
+    ACCOUNTID: Final[str] = "accountid"
+    EVENTID: Final[str] = "eventid"
+
+
+# def _getreader_() -> Iterable[list[str]]:
+#     entryfile_read = open(_CSV_ENTRY, "r", newline="")
+#     return csv.reader(entryfile_read, delimiter=",")
+
+# * Ein csv.DictReader funktioniert im Prinzip wie ein list[dict[str, str]]
+def _getdictreader_() -> csv.DictReader:
     entryfile_read = open(_CSV_ENTRY, "r", newline="")
-    return csv.reader(entryfile_read, delimiter=",")
+    return csv.DictReader(entryfile_read, delimiter=",")
 
-def CreateEntry(accountid: int, eventid: int) -> None:
+def SaveInCSV(accountid: int, eventid: int) -> None:
     entryfile_writer = open(_CSV_ENTRY, "a", newline="")
-    writer = csv.writer(entryfile_writer, delimiter=",")
+    # writer = csv.writer(entryfile_writer, delimiter=",")
+    writer = csv.DictWriter(entryfile_writer, delimiter=",")
     entryid = uuid.uuid4()  # Random uuid
-
     writer.writerow([entryid, accountid, eventid])
 
 def DidAccountAlreadyEnter(accountid, eventid) -> bool:
-    reader = _getreader_()
-    next(reader)  # Skip Header
+    # reader = _getreader_()
+    reader = _getdictreader_()
+    # next(reader)  # Skip Header  * Nicht notwendig beim dictreader
     for row in reader:
-        if not row:  # row is empty
+        if not row.values():  # row is empty
             continue
-        if row[1] == accountid and row[2] == eventid:
+
+        # * Wichtiges Detail:
+        # Es wird row.get(...) anstatt row[...] benutzt, weil
+        # row.get(...) None zurückgibt, wenn der Key, bzw. die Spalte,
+        # nicht existiert.
+        # Das ist wichtig, weil wenn die Spalte leer ist, oder die ganze
+        # Reihe leer ist, werden die Values der Keys automatisch zu None.
+        # (Pythons *eingebaute* csv Bibliothek hat Leider
+        # Schwierigkeiten mit Zeilenumbrüchen (siehe Kommentar
+        # "Komisches Python verhalten" in accountmanager.AddAccount))
+        if row.get(CSVHeader.ACCOUNTID) == accountid and row.get(CSVHeader.EVENTID) == eventid:
             return True
     return False
 
 def GetAllEntriedEventsOfAccount(accountid) -> list[eventmanager.Event] | None:
     events: list[eventmanager.Event] = eventmanager.GetAllEvents()
-    reader: list[list[str]] = list(_getreader_())
-    if not reader[1:]:
+    # reader: list[list[str]] = list(_getreader_())
+    reader = _getdictreader_()
+    if not reader:
         return None
     entriedevents: list[eventmanager.Event] = []
-    for row in reader[1:]:
-        if row and row[1] == accountid:
-            entriedevents.append(eventmanager.GetEventFromId(row[2]))
+    for row in reader:
+        if row.values() and row.get(CSVHeader.ACCOUNTID) == accountid:
+            entriedevents.append(eventmanager.GetEventFromId(CSVHeader.EVENTID))
     return entriedevents
 
 def DeleteAllEntriesWithEvent(eventid) -> None:
     events: list[eventmanager.Event] = eventmanager.GetAllEvents()
-    reader = list(_getreader_())
-    rowstoremove: list[list[str]] = []
-    if not reader[1:]:  # CSV enthält nur Header
-        raise erros.AccountHasNoEntriesError()
-    for row in reader[1:]:
-        if row[2] == eventid:
-            rowstoremove.append(row)
-    for row in rowstoremove:
-        reader.remove(row)
-    # ! Important Note: The file will be completely deleted after this
-    # ! The fille will be completely rewriten
-    csvfile = open(_CSV_ENTRY, "w", newline="")
-    writer = csv.writer(csvfile, delimiter=",")
-    writer.writerows(reader)
+    # reader = list(_getreader_())
+    # One for reading and one for removing
+    reader: csv.DictReader = _getdictreader_()
+    rowsWithoutEvent: list[dict[str, str]] = []
+    for row in reader:
+        if not row.values():
+            raise errors.AccountHasNoEntriesError()
+        if row.get(CSVHeader.EVENTID) == eventid:
+            continue
+        rowsWithoutEvent.append(row)
+    
+    # ! Wichtige Notiz:
+    # Die Datei wird direkt nach dem öffnen komplett gelöscht.
+    # Bei writer.writerows() wird sie komplett neugeschrieben
+    entryfile_write = open(_CSV_ENTRY, "w", newline="")
+    # writer = csv.writer(csvfile, delimiter=",")
+    writer = csv.DictWriter(entryfile_write, delimiter=",")
+    writer.writerows(rowsWithoutEvent)
 
 def DeleteEntry(accountid: int, eventid: int) -> None:
-    reader = list(_getreader_())
-    rowtoremove: list[str] = []
-    if not reader[1:]:
-        raise erros.AccountHasNoEntriesError("Nur Header")
-    for row in reader[1:]:
-        if row[1] == accountid and row[2] == eventid:
-            rowtoremove = row
-            break
-    reader.remove(rowtoremove)
-    # ! Important Note: The file will be completely deleted after this
-    # ! We will completely rewrite it
-    csvfile = open(_CSV_ENTRY, "w", newline="")
-    writer = csv.writer(csvfile, delimiter=",")
-    writer.writerows(reader)
+    reader = _getdictreader_()
+    newCSV: list[dict[str, str]] = []
+    for row in reader:
+        if not row.values():
+            continue # raise errors.AccountHasNoEntriesError("Nur Header")
+        if row.get(CSVHeader.ACCOUNTID) == accountid and row.get(CSVHeader.EVENTID) == eventid:
+            continue
+        newCSV.append(row)
 
+    # ! Wichtige Notiz:
+    # Die Datei wird direkt nach dem öffnen komplett gelöscht.
+    # Bei writer.writerows() wird sie komplett neugeschrieben
+    entryfile_write = open(_CSV_ENTRY, "w", newline="")
+    # Ich benutze hier einen normalen writer, weil ich das vorher in
+    # eine list umgewandelt habe, weil es so für mich einfacher ist,
+    # eine Zeile zu löschen
+    writer = csv.DictWriter(entryfile_write, delimiter=",")
+    writer.writerows(newCSV)
