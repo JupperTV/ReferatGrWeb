@@ -10,9 +10,9 @@ from typing import Final
 
 import flask  # Das Framework
 
+import accountmanager
 import entrymanager
 import eventmanager
-import accountmanager
 import errors
 
 # I don't know what static_folder is for but I use it anyway just in case
@@ -32,7 +32,7 @@ def index():
 @app.route("/dashboard", methods=["GET"])
 def dashboard():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
-    email: str | None = accountmanager.GetEmailFromToken(token)
+    email: str | None = accountmanager.GetAccountFromToken(token).email
     return flask.render_template("dashboard.html", email=email)
 
 # TODO: Test
@@ -47,13 +47,15 @@ def register():
         return "The passwords are not the same"
     try:
         accountmanager.SaveInCSV(form["email"], form["password"],
-                                       form["firstname"], form["lastname"])
+                                 form["firstname"], form["lastname"])
     except errors.AccountAlreadyExistsError:
         return "There is already an account registered with that email"
     msg = f"You are now registered and logged in with the email {form["email"]}"
     response: flask.Response = flask.make_response(msg)
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
-                        value=accountmanager.GetUserToken(form["email"]))
+                        value=accountmanager.GetAccountFromEmail(
+                            form["email"]).accountid
+                        )
     return response
 
 # TODO: Test
@@ -73,7 +75,7 @@ def login():
     msg = f"You are now logged in with the email {form["email"]}"
     response: flask.Response = flask.make_response(msg)
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
-                        value=accountmanager.GetUserToken(form["email"]))
+                        value=accountmanager.GetAccountFromEmail(form["email"]).accountid)
     return response
 
 # Entferne den Cookie vom Browser, damit keine Auth. mehr gemacht wird
@@ -90,21 +92,31 @@ def logout():
 def events():
     if flask.request.method == "GET":
         loggedin: bool = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN) is not None
-        allevents: list[eventmanager.Event] = eventmanager.GetAllEvents()
-        if not allevents:
+        events: list[eventmanager.Event] = eventmanager.GetAllEvents()
+        if not events:
             return "No Events :("
         scriptIfRedirect = ""
         # isredirect is set on /createentry if entrymanager.DidAccountAlreadyEnter()
         if flask.request.args.get("isredirect"):
             scriptIfRedirect = "<script>alert('You have already entered the event')</script>"
         
-        for event in allevents:
+        for e in events:
+            print(list(e))
+        
+        for event in events:
             event.epoch = eventmanager.EpochToNormalTime(event.epoch)
         
         def getorganizer(event: eventmanager.Event) -> str:
-            return accountmanager.GetFullNameOfAccount(event.organizeremail)
+            account = accountmanager.GetAccountFromEmail(event.organizeremail)
+            event.description = event.description.replace(";;;", ",")
+            return f"{account.firstname} {account.lastname}"
         
-        return flask.render_template("events.html", allevents=allevents,
+        open("thing.html", "w").write(flask.render_template("events.html", events=events,
+                                     list=list, loggedin=loggedin, getorganizer=getorganizer,
+                                     enumerate=enumerate, eventmanager=eventmanager
+                                        ).replace("<body>", "<body>"+scriptIfRedirect))
+        
+        return flask.render_template("events.html", events=events,
                                      list=list, loggedin=loggedin, getorganizer=getorganizer,
                                      enumerate=enumerate, eventmanager=eventmanager
                                         ).replace("<body>", "<body>"+scriptIfRedirect)
@@ -142,8 +154,8 @@ def createevent():
     street = f("street")
     housenumber: str = f("housenumber")
     organizertoken = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
-    organizeremail = accountmanager.GetEmailFromToken(organizertoken)
-    description = f("description")
+    organizeremail = accountmanager.GetAccountFromToken(organizertoken).email
+    description = f("description").replace(",", ";;;")
     # endregion
 
     eventmanager.CreateEventFromForm(
@@ -163,8 +175,11 @@ def entries():
         if not events:
             return "This account doesn't have any entries"
         loggedin: bool = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN) is not None
+        
         def getorganizer(event: eventmanager.Event) -> str:
-            return accountmanager.GetFullNameOfAccount(event.organizeremail)
+            account = accountmanager.GetAccountFromEmail(event.organizeremail)
+            event.description = event.description.replace(";;;", ",")
+            return f"{account.firstname} {account.lastname}"
         
         return flask.render_template(
                 "entries.html", events=events, enumerate=enumerate,
@@ -172,7 +187,6 @@ def entries():
                 getorganizer=getorganizer)
 
     # else flask.request.method == "POST"
-
     eventid = list(flask.request.form.keys())[0]
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
     try:
@@ -186,8 +200,8 @@ def entries():
 @app.route("/myevents", methods=["GET", "POST"])
 def myevents():
     if flask.request.method == "GET":
-        accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
-        email = accountmanager.GetEmailFromToken(accountid)
+        token = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
+        email = accountmanager.GetAccountFromToken(token).email
         createdevents = eventmanager.GetAllEventsCreatedByOrganizer(email)
         return flask.render_template("myevents.html", list=list,
                                      events=createdevents, enumerate=enumerate,
@@ -215,4 +229,3 @@ def checkIfUserIsLoggedIn():
 if __name__ == "__main__":
     DEFAULT_HTTP_PORT = 80  # Zur Vermeidung von Magic Numbers
     app.run(port=DEFAULT_HTTP_PORT, debug=True)
-

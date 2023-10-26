@@ -13,7 +13,7 @@
     <div class="wholeevent" style="margin: 25%; margin-bottom: 2%; margin-top: 2%;">
         <div class="eventdetails" style="border-color:black; border-style: solid;">
             <div class="text" style="margin-left: 1%;">
-                {% for index, key in enumerate(eventmanager.KEYS_DE) %}
+                {% for index, key in enumerate(eventmanager.KEYS_FOR_OUTPUT) %}
                 <p><strong>{{ key }}</strong>: {{ list(event)[index] }}</p>
                 {% endfor %}
             </div>

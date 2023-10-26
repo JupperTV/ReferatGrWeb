@@ -13,10 +13,10 @@
 - [x] Alle POST-Requests sollen zur selben Seite gehen und nicht zu Seiten mit anderen Namen
 - [x] Im /events HTML knöpfe für nicht-login ausmachen
 - [x] Dashboard mit Buttons zu allen Events und Entries
-- [ ] **CODE REFACTORING MIT \_getdictreader\_() UND KLASSEN FÜR DIE MANAGER**
+- [x] **CODE REFACTORING MIT \_getdictreader\_() UND KLASSEN FÜR DIE MANAGER**
+- [ ] "Zurück zum Dashboard"-Knopf nach jedem POST-Request zeigen
 - [ ] Event-Typen (Online, Lokal) mit anderer Ausgabe in /events /entries /myevents
 - [ ] Event Umänderer
-- [ ] "Zurück zum Dashboard"-Knopf nach jedem POST-Request zeigen
 - [ ] Account Umänderer
 - [ ] Passwort Umänderer
 - [ ] Kleine CSS Verschönerung
