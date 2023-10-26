@@ -64,7 +64,7 @@ def DeleteAllEntriesWithEvent(eventid) -> None:
     rowsWithoutEvent: list[dict[str, str]] = []
     for row in reader:
         if not row.values():
-            raise errors.AccountHasNoEntriesError()
+            continue
         if row.get(CSVHeader.EVENTID) == eventid:
             continue
         rowsWithoutEvent.append(row)

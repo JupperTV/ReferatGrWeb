@@ -80,7 +80,6 @@ def _obfuscateText_(text: bytes) -> bytes:
 # entrymanager.py sich die Werte nehmen können, die sie brauchen,
 # ohne, dass ich jedesmal eine neue Funktion machen muss, wo ich nur
 # den Wert, der gerade gebraucht wird, ausgeben
-# TODO: Test
 def GetAccountFromEmail(email: str) -> Account | None:
     reader: csv.DictReader = _getdictreader_()
     for row in reader:
@@ -97,7 +96,6 @@ def GetAccountFromEmail(email: str) -> Account | None:
             return Account.InitFromDict(row)
     raise errors.AccountDoesNotExistError()
 
-# TODO: Test
 # Notiz: Accountid == Token im Cookie
 def GetAccountFromToken(token: str) -> Account:
     reader: csv.DictReader = _getdictreader_()
@@ -108,7 +106,6 @@ def GetAccountFromToken(token: str) -> Account:
 def PasswordsAreEqual(originalpassword: str, obfuscatedpassword: str) -> bool:
     return originalpassword == b64decode(obfuscatedpassword).decode()
 
-# TODO: Test
 def LoginIsValid(email: str, originalpassword: str) -> bool:
     # accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
     # reader: Iterable[dict] = csv.DictReader(accountfile_read, delimiter=",")
@@ -131,25 +128,23 @@ def UserExists(email: str) -> bool:
     return False
 
 # TODO: In Zukunft noch verbessern?
-def PasswordIsValid(password: str) -> bool:
-    if not password:
+def PasswordIsValid(originalpassword: str) -> bool:
+    if not originalpassword:
         return False
     return True
 
 def EmailIsValid(email: str) -> bool:
     return re.fullmatch(_REGEX_VALID_EMAIL, email) != _UNSUCCESFUL_MATCH
 
-# TODO: Test
-def SaveInCSV(account: Account) -> None:
-    if not PasswordIsValid(account.base64password):
+def SaveInCSV(email, originalpassword, firstname, lastname) -> None:
+    if not PasswordIsValid(originalpassword):
         raise ValueError("Password ist nicht gültig")
-    if not EmailIsValid(account.email):
+    if not EmailIsValid(email):
         raise ValueError("E-Mail Adresse ist nicht gültig")
-
     reader = _getdictreader_()
 
     for row in reader:
-        if account.email == row.get(CSVHeader.EMAIL):
+        if email == row.get(CSVHeader.EMAIL):
             raise errors.AccountAlreadyExistsError()
 
     accountid = uuid.uuid4()  # Zufällige UUID
@@ -159,12 +154,12 @@ def SaveInCSV(account: Account) -> None:
         # .decode() ist von der bytes Klasse und wandelt das bytes Objekt
         # in einen str um
         passwordToSave = _obfuscateText_(
-            bytes(account.base64password, "unicode_escape")).decode()
+            bytes(originalpassword, "unicode_escape")).decode()
         
         # Es kann sein, dass es einen besseren Weg gibt, die Werte aus
         # dem Account Objekt zu speichern
-        writer.writerow([accountid, account.email, passwordToSave,
-                         account.firstname, account.lastname])
+        writer.writerow([accountid, email, passwordToSave,
+                         firstname, lastname])
 
 # TODO
 def RemoveAccount():

@@ -33,9 +33,7 @@ class CSVHeader:
             CSVHeader.ORGANIZER_EMAIL, CSVHeader.COUNTRY, CSVHeader.CITY,
             CSVHeader.ZIPCODE, CSVHeader.STREET, CSVHeader.HOUSENUMBER,
             CSVHeader.DESCRIPTION]
-    
-    
-# * Vielleicht ist es sogar besser, das zu einem TypedDict umzuwandeln
+
 class Event:
     def InitFromDict(dictionary: csv.DictReader | dict[str, str]):
         if len(dictionary) < 10:
@@ -88,7 +86,6 @@ def EpochToNormalTime(epoch: float | str) -> str:
     return babel.dates.format_datetime(readabledate, locale="de_DE",
                                        format="dd.MM.yyyy 'um' HH:mm")
 
-# TODO: Test
 def GetAllEventsCreatedByOrganizer(organizeremail: str) -> list[Event]:
     reader = _getdictreader_()
     events: list[Event] = []
@@ -101,11 +98,9 @@ def GetAllEventsCreatedByOrganizer(organizeremail: str) -> list[Event]:
         raise errors.AccountHasNoEventsError()
     return events
 
-# TODO: Test
 def GetAllEvents() -> list[Event]:
     return [Event.InitFromDict(row) for row in _getdictreader_()]
 
-# TODO: Test
 def EventExists(event: Event) -> bool:
     reader = _getdictreader_()
     for row in reader:
@@ -113,7 +108,6 @@ def EventExists(event: Event) -> bool:
             return True
     return False
 
-# TODO: Test
 def GetEventFromId(eventid) -> Event | None:
     reader = _getdictreader_()
     for row in reader:
@@ -121,28 +115,42 @@ def GetEventFromId(eventid) -> Event | None:
             return Event.InitFromDict(row)
     return None
 
+def IsTheSameEvent(*args) -> bool:
+    reader = _getdictreader_()
+    for row in reader:
+        # Falls ein Benutzer die exakt selben Daten nochmal eingibt,
+        # werden nur EventIDs unterschiedlich sein.
+        # Deswegen werden sie hier nicht verglichen
+        row.pop(CSVHeader.EVENTID)
+        for index, header in enumerate(CSVHeader.AsList()):
+            if args[index] != row.get(header):
+                return False
+    return True
+
 def CreateEventFromForm(eventname, epoch: float, organizeremail, country, city,
                         zipcode: str, street, housenumber: str,
                         description: str) -> None:
-    SaveInCSV(Event(eventid=uuid.uuid4(), eventname=eventname, epoch=epoch,
+    SaveInCSV(eventid=uuid.uuid4(), eventname=eventname, epoch=epoch,
                     organizeremail=organizeremail, country=country, city=city,
                     zipcode=zipcode, street=street, housenumber=housenumber,
-                    description=description))
+                    description=description)
 
-def SaveInCSV(event: Event) -> None:
-    if EventExists(event):
+def SaveInCSV(eventid, eventname, epoch, organizeremail, country, city, zipcode,
+              street, housenumber, description) -> None:
+    if IsTheSameEvent(eventname, epoch, organizeremail, country, city, zipcode,
+                      street, housenumber, description):
         raise errors.EventAlreadyExistsError()
     eventfile_write = open(_CSV_EVENT, "a", newline="")
-    # Es lohnt sich nicht, einen extra DictWriter zu benutzen, nur um
+    # Es lohnt sich nicht, einen extra DictWriter zu benutzen, um nur
     # eine Zeile hinzuzufügen
     writer = csv.writer(eventfile_write, delimiter=",")
-    writer.writerow(list(event))
+    writer.writerow([eventid, eventname, epoch, organizeremail, country, city,
+                     zipcode, street, housenumber, description])
 
 # TODO
 def ModifyEvent():
     return NotImplementedError()
 
-# TODO: Test
 def DeleteEvent(eventid):
     # Hier werden alle anderen Events (und die Überschriften) gelesen
     # und dann in die Datei überschrieben

@@ -12,12 +12,12 @@
 	</div>
 	<div class="buttons">
 		<!--Python verarbeitet selber automatisch, ob "/" zu /index oder zu /dashboard wechselt-->
-		<a href="{{ backlink }}">
-			<input type="button" name="backbutton" value="{{backbuttontext}}">
-		</a>
-		<a href="/">
-			<input type="button" name="homebutton" value="{{homebuttontext}}">
-		</a>
+		<form action="{{ backlink }}" method="get">
+			<input type="submit" name="backbutton" value="{{ backbuttontext }}">
+		</form>
+		<form action="/" method="get">
+			<input type="submit" name="homebutton" value="{{ homebuttontext }}">
+		</form>
 	</div>
 </body>
 </html>

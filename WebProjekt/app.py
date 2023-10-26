@@ -28,7 +28,6 @@ def root():
 def index():
     return flask.render_template("index.html")
 
-# TODO: Test
 @app.route("/dashboard", methods=["GET"])
 def dashboard():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
@@ -36,44 +35,64 @@ def dashboard():
     return flask.render_template("dashboard.html", email=email)
 
 def gethomebuttontext() -> str:
-        if not flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
-            return "Zurück zur Startseite"
-        else:
+        if flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN):
             return "Zurück zum Dashboard"
+        else:
+            return "Zurück zur Startseite"
 
-# TODO: Test
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if flask.request.method == "GET":
         return flask.render_template("register.html")
     form: dict = flask.request.form
+    message = None
+    if accountmanager.EmailIsValid(form["email"]):
+        message = "Die E-Mail ist ungültig"
     if accountmanager.UserExists(form["email"]):
-        return "There is already an account registered with that email"
+        message = "Es gibt schon einen Account, der mit dieser E-Mail registriert ist" if not message else message
     if form["password"] != form["repeatpassword"]:
-        return "The passwords are not the same"
+        message = "Die Passwörter stimmen nicht über ein" if not message else message
+    if not accountmanager.PasswordIsValid(form["password"]):
+        message = "Das Passwort ist ungültig" if not message else message
+    if message:  # Einer der if-Statements war True
+        title = "Registrierung"
+        # checkIfUserIsLoggedIn() überprüft selber, ob "/" zu /index
+        # oder zu /dashboard umleiten soll
+        link = flask.url_for("root")
+        buttontext = gethomebuttontext()
+        return flask.render_template("messageonebutton.html", title=title,
+                                     message=message, link=link, 
+                                     buttontext=buttontext)
+
     try:
         accountmanager.SaveInCSV(form["email"], form["password"],
                                  form["firstname"], form["lastname"])
     except errors.AccountAlreadyExistsError:
-        token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
         homebuttontext = gethomebuttontext()
         backbuttontext = "Zurück zur Registrierung"
         message = "Ein Account mit dieser E-Mail ist bereits registriert"
         link = f"{flask.url_for("register")}"
         title="Fehler"
-        return flask.render_template("error.html", title=title, message=message
+        return flask.render_template("messagetwobuttons.html", title=title,
+                                     message=message, backlink=link,
                                      homebuttontext=homebuttontext,
                                      backbuttontext=backbuttontext)
 
-    msg = f"<h1>You are now registered and logged in with the email {form["email"]}</h1>"
-    response: flask.Response = flask.make_response(msg)
+    # msg = f"<h1>You are now registered and logged in with the email {form["email"]}</h1>"
+    title = "Registrierung"
+    message=f"Die Registrierung war erfolgreich und du bist jetzt  mit der E-Mail {form["email"]} angemeldet"
+    link = flask.url_for("dashboard")
+    buttontext = "Zum Dashboard"
+    response: flask.Response = flask.make_response(
+        flask.render_template("messageonebutton.html", title=title, message=message,
+                              link=link, buttontext=buttontext)
+    )
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
                         value=accountmanager.GetAccountFromEmail(
                             form["email"]).accountid
                        )
     return response
 
-# TODO: Test
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if flask.request.method == "GET":
@@ -88,32 +107,49 @@ def login():
     if not accountmanager.LoginIsValid(form["email"], form["password"]):
         message = "Falsches Passwort für Account" if not message else message
     if message:
-        token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
-        homebuttontext = gethomebuttontext()
-        backbuttontext = "Zurück zum Login"
-        link = f"{flask.url_for("login")}"
         title="Fehler"
-    return flask.render_template("error.html", title=title, message=message
+        backlink = f"{flask.url_for("login")}"
+        backbuttontext = "Zurück zum Login"
+        homebuttontext = gethomebuttontext()
+        return flask.render_template("messagetwobuttons.html", title=title,
+                                     message=message, backlink=backlink,
                                      homebuttontext=homebuttontext,
                                      backbuttontext=backbuttontext)
-    msg = f"You are now logged in with the email {form["email"]}"
-    response: flask.Response = flask.make_response(msg)
+    
+    title="Login"
+    # Diese message Variable und die message Variable von davor, haben
+    # nichts miteinander zu tun. Ich benenne sie immer noch nicht um,
+    # damit alle Variablen, auch wenn sie in anderen Funktionen sind,
+    # für {{ message }} in messageonebutton.html oder
+    # messageonebutton.html den gleichen Namen haben.
+    # Das hilft (für mich) für die Lesbarkeit
+    message = f"Du bist jetzt mit der E-Mail {form["email"]} eingeloggt"
+    link = flask.url_for("dashboard")
+    buttontext = "Zum Dashboard"
+    response: flask.Response = flask.make_response(
+        flask.render_template("messageonebutton.html", title=title, link=link,
+                              message=message, buttontext=buttontext))
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
-                        value=accountmanager.GetAccountFromEmail(form["email"]).accountid)
+                        value=accountmanager.GetAccountFromEmail(
+                            form["email"]).accountid)
     return response
 
 # Entferne den Cookie vom Browser, damit keine Auth. mehr gemacht wird
 # Und nicht mehr geprüft wird, welcher Benutzer sich eingeloggt hat
 @app.route("/logout", methods=["GET"])
 def logout():
-    # Für das Logout ist der zusätzliche "Zurück zur Startseite"-Knopf
-    # schon eingebaut
-    resp = flask.Response("Succesfully logged out")
+    email = accountmanager.GetAccountFromToken(COOKIE_NAME_LOGIN_TOKEN)
+    title = "Logout"
+    message = f"Der Account mit der E-Mail {email} wurde erfolgreich ausgeloggt"
+    link = flask.url_for("index")
+    buttontext = "Zurück zur Startseite"
+    resp = flask.Response(
+        flask.render_template("messageonebutton.html", title=title, link=link,
+                              message=message, buttontext=buttontext))
     resp.delete_cookie(COOKIE_NAME_LOGIN_TOKEN)
     return resp
 
-# ALLE Events die erstellt wurde, auch die, von anderen Benutzern
-# TODO: Test
+# ALLE Events die erstellt wurden. Auch die, von anderen Benutzern
 @app.route("/events", methods=["GET", "POST"])
 def events():
     if flask.request.method == "GET":
@@ -138,19 +174,27 @@ def events():
                                      isredirect=isredirect)
 
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
-    # Das alles wird ausgeführt, wenn die request methode POST ist
+    
+    # Das alles wird ausgeführt, wenn die request methode POST ist.
     # Das einzige, dass im Form übergeben wird, ist der button,
     # der die eventid in seinem Namen hat
     eventid = list(flask.request.form.keys())[0]
     if entrymanager.DidAccountAlreadyEnter(accountid, eventid):
         return flask.redirect(flask.url_for("events", isredirect=True))
+
     entrymanager.SaveInCSV(accountid, eventid)
 
-    # TODO: Zu einer HTML Datei umwandeln
-    return ":)"
+    title = "Events"
+    message = f"Du hast dich zum event '{eventmanager.GetEventFromId(eventid).eventname}' erfolgreich eingetragen"
+    backlink = flask.url_for("events")
+    backbuttontext = "Zurück zu allen Events"
+    homebuttontext = gethomebuttontext()
+    return flask.render_template("messagetwobuttons.html", title=title,
+                                 message=message, backlink=backlink,
+                                 backbuttontext=backbuttontext,
+                                 homebuttontext=homebuttontext)
 
 # Ein neues Event erstellen
-# TODO: Test
 @app.route("/createevent", methods=["GET", "POST"])
 def createevent():
     if flask.request.method == "GET":
@@ -162,8 +206,8 @@ def createevent():
     # (Anscheinend ist das T zur Trennung da)
     f = lambda s: form[s]
     # region getitems from form
-    datetime: time.struct_time = time.strptime(f("datetime"), "%Y-%m-%dT%H:%M")
     eventname = f("eventname")
+    datetime: time.struct_time = time.strptime(f("datetime"), "%Y-%m-%dT%H:%M")
     epoch: float = float(time.mktime(datetime))
     country = f("country")
     city = f("city")
@@ -187,24 +231,40 @@ def createevent():
         backlink = flask.url_for("createevent")
         backbuttontext = "Zurück zur Eventerstellung"
         homebuttontext = gethomebuttontext()
-        return flask.render_template("error.html", title=title, message=message,
-                                     backlink=backlink,
+        return flask.render_template("messagetwobuttons.html", title=title,
+                                     message=message, backlink=backlink,
                                      backbuttontext=backbuttontext,
                                      homebuttontext=homebuttontext)
 
-    # TODO: Zu einer HTML Datei umwandeln
-    return f"Das Event '{eventname}' wurde von dir mit der Email {organizeremail} erstellt"
+    title="Eventerstellung"
+    message = f"Das Event '{eventname}' wurde von dir mit der Email {organizeremail} erstellt"
+    backlink = flask.url_for("events")
+    backbuttontext = "Zu den Events"
+    homebuttontext = gethomebuttontext()
+    return flask.render_template("messagetwobuttons.html", title=title,
+                                 message=message, backlink=backlink,
+                                 backbuttontext=backbuttontext,
+                                 homebuttontext=homebuttontext)
 
 # Alle Einträge, die der Account gemacht hat
-# TODO: Test
 @app.route("/entries", methods=["GET", "POST"])
 def entries():
     if flask.request.method == "GET":
         accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
         events: list[eventmanager.Event] = entrymanager.GetAllEntriedEventsOfAccount(accountid)
+        
         if not events:
-            return "This account doesn't have any entries"
-        loggedin: bool = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN) is not None
+            title = "Fehler"
+            message = "Du hast noch zu keinem Event eingetragen"
+            backlink = flask.url_for("events")
+            backbuttontext = "Zu den Events"
+            homebuttontext = gethomebuttontext()
+            return flask.render_template("messagetwobuttons.html", title=title,
+                                         message=message, backlink=backlink,
+                                         backbuttontext=backbuttontext,
+                                         homebuttontext=homebuttontext)
+            
+        loggedin = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN) is not None
 
         def getorganizer(event: eventmanager.Event) -> str:
             account = accountmanager.GetAccountFromEmail(event.organizeremail)
@@ -216,44 +276,68 @@ def entries():
                 loggedin=loggedin, eventmanager=eventmanager, list=list,
                 getorganizer=getorganizer)
 
-    # else flask.request.method == "POST"
+    # Ab hier ist der code für POST Requests
     eventid = list(flask.request.form.keys())[0]
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
-    try:
-        entrymanager.DeleteEntry(accountid, eventid)
-    except errors.AccountHasNoEntriesError:
-        return "This account does not have any entries"
-    return ":)"
+    entrymanager.DeleteEntry(accountid, eventid)
+    
+    title = "Einträge"
+    message = f"Dein Eintrag zum Event '{eventmanager.GetEventFromId(eventid).eventname}' wurde erfolgreich gelöscht"
+    backlink = flask.url_for("entries")
+    backbuttontext = "Zurück zu den Einträgen"
+    homebuttontext = gethomebuttontext()
+    return flask.render_template("messagetwobuttons.html", title=title,
+                                 message=message, backlink=backlink,
+                                 backbuttontext=backbuttontext,
+                                 homebuttontext=homebuttontext)
 
 # Alle Events, die der Nutzer erstellt hat
-# TODO: Test
 @app.route("/myevents", methods=["GET", "POST"])
 def myevents():
     if flask.request.method == "GET":
         token = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
         email = accountmanager.GetAccountFromToken(token).email
-        createdevents = eventmanager.GetAllEventsCreatedByOrganizer(email)
+        title = "Meine Events"
+        try:
+            createdevents = eventmanager.GetAllEventsCreatedByOrganizer(email)
+        except errors.AccountHasNoEventsError:
+            message = "Du hast noch keine Events erstellt"
+            backlink = flask.url_for("createevent")
+            backbuttontext = "Ein Event erstellen"
+            homebuttontext = gethomebuttontext()                   
+            return flask.render_template("messagetwobuttons.html", title=title,
+                                         message=message, backlink=backlink,
+                                         backbuttontext=backbuttontext,
+                                         homebuttontext=homebuttontext)
         return flask.render_template("myevents.html", list=list,
                                      events=createdevents, enumerate=enumerate,
                                      eventmanager=eventmanager)
 
-    # * else flask.request.method == "POST"
+    # Ein POST Request wird gesendet, wenn ein Event 
     eventid = list(flask.request.form.keys())[0]
-    try:
-        eventmanager.DeleteEvent(eventid)
-    except errors.AccountHasNoEntriesError:
-        return "This account does not have any entries"
-    return ":)"
+    eventmanager.DeleteEvent(eventid)
+    
+    message = "Das Event wurde erfolgreich gelöscht."
+    backlink = flask.url_for("myevents")
+    backbuttontext = "Zurück zu deinen Events"
+    homebuttontext = gethomebuttontext()
+    return flask.render_template("messagetwobuttons.html", title=title,
+                                 message=message, backlink=backlink,
+                                 backbuttontext=backbuttontext,
+                                 homebuttontext=homebuttontext())
 
 @app.before_request
 def checkIfUserIsLoggedIn():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
     allowedSitesIfNotLoggedIn: list[str] = ["index","register","login","events"]
+    # Durch dieses if-Statement habe ich, ohne es zu bemerken,
+    # verhindert, dass Seiten, die garnicht existieren, wie z.B. /abcde,
+    # den error code 404 ausgeben
     if (not token) and (flask.request.endpoint not in allowedSitesIfNotLoggedIn):
         return flask.redirect(flask.url_for("index"))
     if token and flask.request.endpoint == "index":
         return flask.redirect(flask.url_for("dashboard"))
-    # return nothing and continue to the requested site
+    # Nicht wird ausgegeben
 
 
 if __name__ == "__main__":
