@@ -35,6 +35,12 @@ def dashboard():
     email: str | None = accountmanager.GetAccountFromToken(token).email
     return flask.render_template("dashboard.html", email=email)
 
+def gethomebuttontext() -> str:
+        if not flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
+            return "Zurück zur Startseite"
+        else:
+            return "Zurück zum Dashboard"
+
 # TODO: Test
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -49,13 +55,22 @@ def register():
         accountmanager.SaveInCSV(form["email"], form["password"],
                                  form["firstname"], form["lastname"])
     except errors.AccountAlreadyExistsError:
-        return "There is already an account registered with that email"
-    msg = f"You are now registered and logged in with the email {form["email"]}"
+        token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
+        homebuttontext = gethomebuttontext()
+        backbuttontext = "Zurück zur Registrierung"
+        message = "Ein Account mit dieser E-Mail ist bereits registriert"
+        link = f"{flask.url_for("register")}"
+        title="Fehler"
+        return flask.render_template("error.html", title=title, message=message
+                                     homebuttontext=homebuttontext,
+                                     backbuttontext=backbuttontext)
+
+    msg = f"<h1>You are now registered and logged in with the email {form["email"]}</h1>"
     response: flask.Response = flask.make_response(msg)
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
                         value=accountmanager.GetAccountFromEmail(
                             form["email"]).accountid
-                        )
+                       )
     return response
 
 # TODO: Test
@@ -65,13 +80,22 @@ def login():
         return flask.render_template("login.html")
 
     form = flask.request.form
+    message = None
     if not accountmanager.UserExists(form["email"]):
-        return "There is no account with this email"
+        message = "Diese E-Mail ist nicht registriert"
     if not accountmanager.PasswordIsValid(form["password"]):
-        return "Invalid password"
+        message = "Das Passwort ist ungültig" if not message else message
     if not accountmanager.LoginIsValid(form["email"], form["password"]):
-        return "Wrong password"
-
+        message = "Falsches Passwort für Account" if not message else message
+    if message:
+        token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
+        homebuttontext = gethomebuttontext()
+        backbuttontext = "Zurück zum Login"
+        link = f"{flask.url_for("login")}"
+        title="Fehler"
+    return flask.render_template("error.html", title=title, message=message
+                                     homebuttontext=homebuttontext,
+                                     backbuttontext=backbuttontext)
     msg = f"You are now logged in with the email {form["email"]}"
     response: flask.Response = flask.make_response(msg)
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
@@ -82,6 +106,8 @@ def login():
 # Und nicht mehr geprüft wird, welcher Benutzer sich eingeloggt hat
 @app.route("/logout", methods=["GET"])
 def logout():
+    # Für das Logout ist der zusätzliche "Zurück zur Startseite"-Knopf
+    # schon eingebaut
     resp = flask.Response("Succesfully logged out")
     resp.delete_cookie(COOKIE_NAME_LOGIN_TOKEN)
     return resp
@@ -94,42 +120,33 @@ def events():
         loggedin: bool = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN) is not None
         events: list[eventmanager.Event] = eventmanager.GetAllEvents()
         if not events:
-            return "No Events :("
-        scriptIfRedirect = ""
-        # isredirect is set on /createentry if entrymanager.DidAccountAlreadyEnter()
-        if flask.request.args.get("isredirect"):
-            scriptIfRedirect = "<script>alert('You have already entered the event')</script>"
-        
-        for e in events:
-            print(list(e))
-        
+            return flask.render_template("noevents.html",
+                                         homebuttontext=gethomebuttontext())
+
         for event in events:
             event.epoch = eventmanager.EpochToNormalTime(event.epoch)
-        
         def getorganizer(event: eventmanager.Event) -> str:
             account = accountmanager.GetAccountFromEmail(event.organizeremail)
             event.description = event.description.replace(";;;", ",")
             return f"{account.firstname} {account.lastname}"
-        
-        open("thing.html", "w").write(flask.render_template("events.html", events=events,
-                                     list=list, loggedin=loggedin, getorganizer=getorganizer,
-                                     enumerate=enumerate, eventmanager=eventmanager
-                                        ).replace("<body>", "<body>"+scriptIfRedirect))
-        
+        # isredirect is set on /createentry if entrymanager.DidAccountAlreadyEnter()
+        isredirect = flask.request.args.get("isredirect")
         return flask.render_template("events.html", events=events,
-                                     list=list, loggedin=loggedin, getorganizer=getorganizer,
-                                     enumerate=enumerate, eventmanager=eventmanager
-                                        ).replace("<body>", "<body>"+scriptIfRedirect)
+                                     list=list, loggedin=loggedin,
+                                     getorganizer=getorganizer,
+                                     enumerate=enumerate, eventmanager=eventmanager,
+                                     isredirect=isredirect)
 
-    # * else flask.request.method == POST
-
+    accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
+    # Das alles wird ausgeführt, wenn die request methode POST ist
     # Das einzige, dass im Form übergeben wird, ist der button,
     # der die eventid in seinem Namen hat
-    accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
     eventid = list(flask.request.form.keys())[0]
     if entrymanager.DidAccountAlreadyEnter(accountid, eventid):
         return flask.redirect(flask.url_for("events", isredirect=True))
     entrymanager.SaveInCSV(accountid, eventid)
+
+    # TODO: Zu einer HTML Datei umwandeln
     return ":)"
 
 # Ein neues Event erstellen
@@ -158,11 +175,24 @@ def createevent():
     description = f("description").replace(",", ";;;")
     # endregion
 
-    eventmanager.CreateEventFromForm(
-            eventname=eventname, epoch=epoch, organizeremail=organizeremail,
-            country=country, city=city, zipcode=zipcode, street=street,
-            housenumber=housenumber, description=description
-    )
+    try:
+        eventmanager.CreateEventFromForm(
+                eventname=eventname, epoch=epoch, organizeremail=organizeremail,
+                country=country, city=city, zipcode=zipcode, street=street,
+                housenumber=housenumber, description=description
+        )
+    except errors.EventAlreadyExistsError:
+        title = "Fehler"
+        message = "Das Event existiert bereits"
+        backlink = flask.url_for("createevent")
+        backbuttontext = "Zurück zur Eventerstellung"
+        homebuttontext = gethomebuttontext()
+        return flask.render_template("error.html", title=title, message=message,
+                                     backlink=backlink,
+                                     backbuttontext=backbuttontext,
+                                     homebuttontext=homebuttontext)
+
+    # TODO: Zu einer HTML Datei umwandeln
     return f"Das Event '{eventname}' wurde von dir mit der Email {organizeremail} erstellt"
 
 # Alle Einträge, die der Account gemacht hat
@@ -175,12 +205,12 @@ def entries():
         if not events:
             return "This account doesn't have any entries"
         loggedin: bool = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN) is not None
-        
+
         def getorganizer(event: eventmanager.Event) -> str:
             account = accountmanager.GetAccountFromEmail(event.organizeremail)
             event.description = event.description.replace(";;;", ",")
             return f"{account.firstname} {account.lastname}"
-        
+
         return flask.render_template(
                 "entries.html", events=events, enumerate=enumerate,
                 loggedin=loggedin, eventmanager=eventmanager, list=list,
