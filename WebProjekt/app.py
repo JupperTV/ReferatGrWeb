@@ -198,7 +198,8 @@ def events():
 @app.route("/createevent", methods=["GET", "POST"])
 def createevent():
     if flask.request.method == "GET":
-        return flask.render_template("createevent.html")
+        return flask.render_template("createevent.html",
+                                     EventType=eventmanager.EventType)
     form: dict[str, str] = flask.request.form
     # * Notiz: Das datetime-local input ist im ISO 860-Format.
     # * Trotzdem gibt das datetime objekt keine Zeitzone zurück.
@@ -209,21 +210,32 @@ def createevent():
     eventname = f("eventname")
     datetime: time.struct_time = time.strptime(f("datetime"), "%Y-%m-%dT%H:%M")
     epoch: float = float(time.mktime(datetime))
-    country = f("country")
-    city = f("city")
-    zipcode: str = f("zipcode")
-    street = f("street")
-    housenumber: str = f("housenumber")
     organizertoken = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
     organizeremail = accountmanager.GetAccountFromToken(organizertoken).email
     description = f("description").replace(",", ";;;")
+    eventtype = f("eventtype")
+    
+    # Daten zu einem Ort sind abhängig von eventmanager.EventType
+    # bzw. eventmanager.Event.eventtype
+    country = ""
+    city = ""
+    zipcode: str = ""
+    street = ""
+    housenumber: str = ""
+    if eventtype == eventmanager.EventType.ON_SITE:
+        country = f("country")
+        city = f("city")
+        zipcode: str = f("zipcode")
+        street = f("street")
+        housenumber: str = f("housenumber")
     # endregion
 
     try:
         eventmanager.CreateEventFromForm(
                 eventname=eventname, epoch=epoch, organizeremail=organizeremail,
                 country=country, city=city, zipcode=zipcode, street=street,
-                housenumber=housenumber, description=description
+                housenumber=housenumber, description=description,
+                eventtype=eventtype
         )
     except errors.EventAlreadyExistsError:
         title = "Fehler"

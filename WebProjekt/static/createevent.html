@@ -5,7 +5,6 @@
     <title>Eventerstellung</title>
 </head>
 <body>
-    <!--"id","name","epoch","organizer","country","city","zipcode","street","housenumber"-->
     <form action="createevent" method="post">
         <div class="input">
             <label for="eventname">Eventname: </label><input type="text" name="eventname" id="eventname">
@@ -13,25 +12,44 @@
         <div class="date">
             <label for="datetime">Datum und Uhrzeit: </label><input type="datetime-local" name="datetime" id="datetime">
         </div>
-        <div class="input">
-            <label for="country">Land: </label><input type="text" name="country" id="country">
+        <div class="dropdown">
+            <label for="eventtype">Art des Treffens: </label><select name="eventtype" id="eventtype" onchange="onchange">
+                <option value="{{ EventType.ON_SITE }}">Vor Ort</option>
+                <option value="{{ EventType.ONLINE }}">Online</option>
+            </select>
+        </div>
+        <div id="onsiteinput">
+            <script>
+                // ! Meine ersten und hoffentlich letzten Zeilen JavaScript, die ich in einem Projekt schreiben muss
+                // Ich habe für einen Fehler, der garnicht mal an JavaScript lag, sondern an Microsoft Edge, um die 50 Minuten verschwendet...
+                onchange = function () {
+                    eventtypeSelection = document.getElementById("eventtype");
+                    console.log(eventtypeSelection.value);
+                    if (eventtypeSelection.value === "{{  EventType.ONLINE }}") {
+                        document.getElementById("onsiteinput").setAttribute("hidden","");
+                    } else {
+                        document.getElementById("onsiteinput").removeAttribute("hidden");
+                    }
+                }
+            </script>
+            <div class="input">
+                <label for="country">Land: </label><input type="text" name="country" id="country">
+            </div>
+            <div class="input">
+                <label for="city">Stadt: </label><input type="text" name="city" id="city">
+            </div>
+            <div class="input">
+                <label for="zipcode">Postleitzahl: </label><input type="number" name="zipcode" id="zipcode">
+            </div>
+            <div class="input">
+                <label for="street">Strasse: </label><input type="text" name="street" id="street">
+            </div>
+            <div class="input">
+                <label for="housenumber">Hausnummer: </label><input type="text" name="housenumber" id="housenumber">
+            </div>
         </div>
         <div class="input">
-            <label for="city">Stadt: </label><input type="text" name="city" id="city">
-        </div>
-        <div class="input">
-            <label for="zipcode">Postleitzahl: </label><input type="number" name="zipcode" id="zipcode">
-        </div>
-        <div class="input">
-            <label for="street">Strasse: </label><input type="text" name="street" id="street">
-        </div>
-        <div class="input">
-            <label for="housenumber">Hausnummer: </label><input type="text" name="housenumber" id="housenumber">
-        </div>
-        <div class=text>
-            <label for="description">Beschreibung: </label>
-        </div>
-        <div class="input">
+            <label for="description">Beschreibung: </label> <br>
             <textarea name="description" id="description"></textarea>
         </div>
         <div class="submit">

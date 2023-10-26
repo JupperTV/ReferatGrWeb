@@ -15,7 +15,8 @@
 - [x] Dashboard mit Buttons zu allen Events und Entries
 - [x] **CODE REFACTORING MIT \_getdictreader\_() UND KLASSEN FÜR DIE MANAGER**
 - [x] "Zurück zu xyz"-Knöpfe nach Errors oder POST-Requests zeigen
-- [ ] Event-Typen (Online, Lokal) mit anderer Ausgabe in /events /entries /myevents
+- [x] Event-Typen (Online, Lokal)
+- [ ] In /events /entries /myevents eine dropdown einfügen, um zwischen vor Ort und Online zu unterscheiden
 - [ ] Event Umänderer
 - [ ] Account Umänderer
 - [ ] Passwort Umänderer
