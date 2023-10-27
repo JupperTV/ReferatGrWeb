@@ -17,7 +17,8 @@
 - [x] "Zurück zu xyz"-Knöpfe nach Errors oder POST-Requests zeigen
 - [x] Event-Typen (Online, Lokal)
 - [x] Output je nach Eventtyp ändern
-- [ ] Event Umänderer
-    - [ ] Daten des originalen Events in html inputs tun
+- [] Event Umänderer
+  - [x] Daten des originalen Events in html inputs tun
+  - [ ] Zeit in /modifyevent fixen
 - [ ] Account Umänderer
 - [ ] Passwort Umänderer

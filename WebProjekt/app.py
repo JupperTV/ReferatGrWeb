@@ -169,6 +169,8 @@ def events():
             event.eventtype = eventmanager.GetReadableEventType(event.eventtype)
         def getorganizer(event: eventmanager.Event) -> str:
             account = accountmanager.GetAccountFromEmail(event.organizeremail)
+            print(event.description)
+            print(f"{list(event)=}")
             event.description = event.description.replace(";;;", ",")
             return f"{account.firstname} {account.lastname}"
         # isredirect is set on /createentry if entrymanager.DidAccountAlreadyEnter()
@@ -266,6 +268,8 @@ def createevent():
                                      backbuttontext=backbuttontext,
                                      homebuttontext=homebuttontext)
 
+    eventname = form.get(eventmanager.CSVHeader.NAME)
+    organizeremail = form.get(eventmanager.CSVHeader.ORGANIZER_EMAIL)
     title="Eventerstellung"
     message = f"Das Event '{eventname}' wurde von dir mit der Email {organizeremail} erstellt"
     backlink = flask.url_for("events")
@@ -374,11 +378,16 @@ def modifyevent():
         eventid = list(flask.request.args.keys())[0]
         originalevent = eventmanager.GetEventFromId(eventid)
         eventdict = dict(zip(eventmanager.CSVHeader.AsList(), list(originalevent)))
+        # eventdict.get(eventmanager.CSVHeader.)
+        isonline = eventdict.get(eventmanager.CSVHeader.EVENTTYPE) == eventmanager.EventType.ONLINE
+        eventdict[eventmanager.CSVHeader.EPOCH] = time.ctime(float(eventdict.get(eventmanager.CSVHeader.EPOCH)))
+        print(f"{eventdict=}")
         # createevent wird wiederverwendet, weil die Inputs gleich sind.
         return flask.render_template("createevent.html",
                                      ismodify=True, eventid=eventid,
                                      EventType=eventmanager.EventType,
                                      formlink=flask.url_for("modifyevent"),
+                                     isonline = isonline,
                                      **eventdict)
 
     # eventdata: dict = FinishCreateEvent(form)
@@ -388,7 +397,7 @@ def modifyevent():
     # eventmanager.ModifyEvent(event)
     print("Args:", dict(flask.request.args))
     print("Form:", dict(flask.request.form))
-    return "Success with Post"
+    return "Ende"
 
 
 @app.before_request

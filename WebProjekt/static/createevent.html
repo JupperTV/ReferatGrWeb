@@ -7,18 +7,17 @@
 <body>
     <form action="{{ formlink }}" method="post">
         <div class="input">
-            <label for="eventname">Eventname: </label><input type="text" name="eventname" id="eventname" value="{{ eventname }}">
+            <label for="eventname">Eventname: </label><input type="text" name="eventname" id="eventname" value="{{ name }}">
         </div>
         <div class="date">
             <label for="datetime">Datum und Uhrzeit: </label><input type="datetime-local" name="datetime" id="datetime" value="{{ datetime }}">
         </div>
         <div class="dropdown">
-            <label for="eventtype">Art des Treffens: </label><select name="eventtype" id="eventtype" onchange="onchange" value="{{ eventtype }}">
+            <label for="eventtype">Art des Treffens: </label><select name="eventtype" id="eventtype" onchange="onchange" value="{{ type }}">
                 <option value="{{ EventType.ON_SITE }}">Vor Ort</option>
                 <option value="{{ EventType.ONLINE }}">Online</option>
             </select>
         </div>
-        <div id="onsiteinput">
             <script>
                 // Meine ersten und hoffentlich letzten Zeilen JavaScript, die ich in einem Projekt schreiben muss.
                 // Ich habe, durch das einbinden von JavaScript, für einen Fehler, der garnicht mal an JavaScript lag,
@@ -32,6 +31,7 @@
                     }
                 }
             </script>
+        <div id="onsiteinput">
             <div class="input">
                 <label for="country">Land: </label><input type="text" name="country" id="country" value="{{ country }}">
             </div>
@@ -55,8 +55,12 @@
         <div class="submit">
             {% if ismodify %}
             <input type="hidden" name="eventid" value="{{ eventid }}">
+            {% endif %}
             <input type="submit" id="submit" name="submit" value="Event erstellen">
         </div>
     </form>
-</body>
-</html>
+    {% if isonline %}
+    <script>document.getElementById("onsiteinput").setAttribute("hidden","");</script>
+    {% endif %}
+    </body>
+    </html>
