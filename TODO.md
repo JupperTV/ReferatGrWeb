@@ -18,5 +18,6 @@
 - [x] Event-Typen (Online, Lokal)
 - [x] Output je nach Eventtyp ändern
 - [ ] Event Umänderer
+    - [ ] Daten des originalen Events in html inputs tun
 - [ ] Account Umänderer
 - [ ] Passwort Umänderer

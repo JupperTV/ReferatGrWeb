@@ -32,11 +32,10 @@ class CSVHeader:
 
     # csv.DictWriter braucht die fieldnames der CSV Datei
     def AsList() -> list[str]:
-        return [
-            CSVHeader.EVENTID, CSVHeader.NAME, CSVHeader.EPOCH,
-            CSVHeader.EVENTTYPE, CSVHeader.ORGANIZER_EMAIL, CSVHeader.COUNTRY,
-            CSVHeader.CITY, CSVHeader.ZIPCODE, CSVHeader.STREET,
-            CSVHeader.HOUSENUMBER, CSVHeader.DESCRIPTION]
+        return [CSVHeader.EVENTID, CSVHeader.NAME, CSVHeader.EPOCH,
+                CSVHeader.EVENTTYPE, CSVHeader.ORGANIZER_EMAIL, CSVHeader.COUNTRY,
+                CSVHeader.CITY, CSVHeader.ZIPCODE, CSVHeader.STREET,
+                CSVHeader.HOUSENUMBER, CSVHeader.DESCRIPTION]
 
 class Event:
     def InitFromDict(dictionary: csv.DictReader | dict[str, str]):

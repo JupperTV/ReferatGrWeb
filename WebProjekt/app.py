@@ -201,25 +201,21 @@ def events():
                                  backbuttontext=backbuttontext,
                                  homebuttontext=homebuttontext)
 
-# Ein neues Event erstellen
-@app.route("/createevent", methods=["GET", "POST"])
-def createevent():
-    if flask.request.method == "GET":
-        return flask.render_template("createevent.html",
-                                     EventType=eventmanager.EventType,
-                                     formlink=flask.url_for("createevent"))
-    form: dict[str, str] = flask.request.form
+# This just gathers all of necessary data e.g. email and eventname and
+# returns it as a dict
+
+def FinishCreateEvent(cookies: dict, form: dict[str, str]) -> dict[str, str]:
     # * Notiz: Das datetime-local input ist im ISO 860-Format.
     # * Trotzdem gibt das datetime objekt keine Zeitzone zurück.
     # * D.h. Das Datum wird als "yyyy-mm-ddThh:mm" gespeichert.
     # (Anscheinend ist das T zur Trennung da)
+    organizertoken = cookies[COOKIE_NAME_LOGIN_TOKEN]
+    organizeremail = accountmanager.GetAccountFromToken(organizertoken).email
+
     f = lambda s: form[s]
-    # region getitems from form
     eventname = f("eventname")
     datetime: time.struct_time = time.strptime(f("datetime"), "%Y-%m-%dT%H:%M")
     epoch: float = float(time.mktime(datetime))
-    organizertoken = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
-    organizeremail = accountmanager.GetAccountFromToken(organizertoken).email
     description = f("description").replace(",", ";;;")
     eventtype = f("eventtype")
 
@@ -236,15 +232,29 @@ def createevent():
         zipcode: str = f("zipcode")
         street = f("street")
         housenumber: str = f("housenumber")
-    # endregion
 
+    # Etwas bessere Lesbarkeit
+    h = eventmanager.CSVHeader
+    # Der einzige Header, der hier nichtzurückgegeben wird, ist die ID, die in
+    # eventmanager erstellt wird
+    return { h.NAME: eventname, h.EPOCH: epoch, h.EVENTTYPE: eventtype,
+             h.ORGANIZER_EMAIL: organizeremail, h.COUNTRY: country, h.CITY: city,
+             h.ZIPCODE: zipcode, h.STREET: street, h.HOUSENUMBER: housenumber,
+             h.DESCRIPTION: description }
+
+# Ein neues Event erstellen
+@app.route("/createevent", methods=["GET", "POST"])
+def createevent():
+    if flask.request.method == "GET":
+        return flask.render_template("createevent.html",
+                                     EventType=eventmanager.EventType,
+                                     formlink=flask.url_for("createevent"),
+                                     ismodify=False,
+                                     eventtype = eventmanager.EventType.ON_SITE)
+    form: dict[str, str] = flask.request.form
+    eventdata: dict = FinishCreateEvent(form)
     try:
-        eventmanager.CreateEventFromForm(
-                eventname=eventname, epoch=epoch, organizeremail=organizeremail,
-                country=country, city=city, zipcode=zipcode, street=street,
-                housenumber=housenumber, description=description,
-                eventtype=eventtype
-        )
+        eventmanager.CreateEventFromForm(*eventdata)
     except errors.EventAlreadyExistsError:
         title = "Fehler"
         message = "Das Event existiert bereits"
@@ -355,15 +365,31 @@ def myevents():
 
 @app.route("/modifyevent", methods=["GET", "POST"])
 def modifyevent():
+    # Notiz: Die ID des Events ist der erste und einzige Schlüssel in den
+    # args. des GET Requests
+    # Die Eventdaten werden als Form übergeben
     if flask.request.method == "GET":
-        print(list(flask.request.args.keys())[0])
-        # createevent.html wird wiederverwendet, weil die Inputs
-        # im Grunde genommen gleich sind.
+        print("Args:", dict(flask.request.args))
+        print("Form:", dict(flask.request.form))
+        eventid = list(flask.request.args.keys())[0]
+        originalevent = eventmanager.GetEventFromId(eventid)
+        eventdict = dict(zip(eventmanager.CSVHeader.AsList(), list(originalevent)))
+        # createevent wird wiederverwendet, weil die Inputs gleich sind.
         return flask.render_template("createevent.html",
+                                     ismodify=True, eventid=eventid,
                                      EventType=eventmanager.EventType,
-                                     formlink=flask.url_for("modifyevent"))
+                                     formlink=flask.url_for("modifyevent"),
+                                     **eventdict)
 
-    print(dict(flask.request.args))
+    # eventdata: dict = FinishCreateEvent(form)
+    # eventid = flask.request.args.keys()
+    # eventdata.update({eventmanager.CSVHeader.EVENTID: eventid})
+    # event = eventmanager.Event.InitFromDict(eventdata)
+    # eventmanager.ModifyEvent(event)
+    print("Args:", dict(flask.request.args))
+    print("Form:", dict(flask.request.form))
+    return "Success with Post"
+
 
 @app.before_request
 def checkIfUserIsLoggedIn():
