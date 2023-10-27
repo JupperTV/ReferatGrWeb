@@ -9,19 +9,24 @@
     <div class="header" style="margin: auto;width: 50%;padding: 10px;text-align: center;">
         <h1>Meine Events</h1>
     </div>
+    {% for event in events %}
     <div class="wholeevent" style="margin: 25%; margin-bottom: 2%; margin-top: 2%;">
-        {% for event in events %}
         <div class="eventdetails" style="border-color:black; border-style: solid;">
+            {% for index, key in enumerate(eventmanager.KEYS_FOR_OUTPUT) %}
             <div class="text" style="margin-left: 1%;">
-                {% for index, key in enumerate(eventmanager.KEYS_FOR_OUTPUT) %}
+                {% if list(event)[index] %}
                 <p><strong>{{ key }}</strong>: {{ list(event)[index] }}</p>
-                {% endfor %}
+                {% endif %}
             </div>
+            {% endfor %}
         </div>
         <form action="/myevents" method="post" >
             <input type="submit" value="Event löschen" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
         </form>
-        {% endfor %}
+        <form action="/modifyevent" method="get">
+            <input type="submit" value="Eventdetails ändern" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
+        </form>
     </div>
+    {% endfor %}
 </body>
 </html>

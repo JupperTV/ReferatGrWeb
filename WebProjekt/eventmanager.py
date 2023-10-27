@@ -21,6 +21,7 @@ class CSVHeader:
     EVENTID: Final[str] = "id"
     NAME: Final[str] = "name"
     EPOCH: Final[str] = "epoch"
+    EVENTTYPE: Final[EventType] = "type"
     ORGANIZER_EMAIL: Final[str] = "organizer"
     COUNTRY: Final[str] = "country"
     CITY: Final[str] = "city"
@@ -28,15 +29,14 @@ class CSVHeader:
     STREET: Final[str] = "street"
     HOUSENUMBER: Final[str] = "housenumber"
     DESCRIPTION: Final[str] = "description"
-    EVENTTYPE: Final[EventType] = "type"
-    
+
     # csv.DictWriter braucht die fieldnames der CSV Datei
     def AsList() -> list[str]:
         return [
             CSVHeader.EVENTID, CSVHeader.NAME, CSVHeader.EPOCH,
-            CSVHeader.ORGANIZER_EMAIL, CSVHeader.COUNTRY, CSVHeader.CITY,
-            CSVHeader.ZIPCODE, CSVHeader.STREET, CSVHeader.HOUSENUMBER,
-            CSVHeader.DESCRIPTION]
+            CSVHeader.EVENTTYPE, CSVHeader.ORGANIZER_EMAIL, CSVHeader.COUNTRY,
+            CSVHeader.CITY, CSVHeader.ZIPCODE, CSVHeader.STREET,
+            CSVHeader.HOUSENUMBER, CSVHeader.DESCRIPTION]
 
 class Event:
     def InitFromDict(dictionary: csv.DictReader | dict[str, str]):
@@ -46,22 +46,23 @@ class Event:
         return Event(eventid=d(CSVHeader.EVENTID),
                      eventname=d(CSVHeader.NAME),
                      epoch=d(CSVHeader.EPOCH),
+                     eventtype=d(CSVHeader.EVENTTYPE),
                      organizeremail=d(CSVHeader.ORGANIZER_EMAIL),
                      country=d(CSVHeader.COUNTRY),
                      zipcode=d(CSVHeader.ZIPCODE),
                      city=d(CSVHeader.CITY),
                      street=d(CSVHeader.STREET),
                      housenumber=d(CSVHeader.HOUSENUMBER),
-                     description=d(CSVHeader.DESCRIPTION),
-                     eventtype=d(CSVHeader.EVENTTYPE)
+                     description=d(CSVHeader.DESCRIPTION)
                      )
 
-    def __init__(self, eventid: str, eventname: str, epoch: str,
+    def __init__(self, eventid: str, eventname: str, epoch: str, eventtype: str,
                  organizeremail: str, country: str, city: str, zipcode: str,
-                 street: str, housenumber: str, description: str, eventtype: str):
+                 street: str, housenumber: str, description: str):
         self.eventid = eventid
         self.eventname = eventname
         self.epoch = epoch
+        self.eventtype=eventtype
         self.organizeremail = organizeremail
         self.country = country
         self.city = city
@@ -69,18 +70,25 @@ class Event:
         self.street = street
         self.housenumber = housenumber
         self.description = description
-        self.eventtype=eventtype
 
     def __iter__(self):
         return iter([
-            self.eventid, self.eventname, self.epoch, self.organizeremail,
-            self.country, self.city, self.zipcode, self.street,
-            self.housenumber, self.description, self.eventtype])
+            self.eventid, self.eventname, self.epoch, self.eventtype,
+            self.organizeremail, self.country, self.city, self.zipcode,
+            self.street, self.housenumber, self.description])
 
 # Das ist nur zum ausgeben da, damiz nicht die Englischen Wörter da stehen
-KEYS_FOR_OUTPUT = ["Eventnummer", "Eventname", "Datum",
+KEYS_FOR_OUTPUT = ["Eventnummer", "Eventname", "Datum", "Eventtyp",
            "Email des Veranstalters", "Land", "Stadt", "PLZ", "Strasse",
-           "Hausnummer", "Beschreibung", "Eventtyp"]
+           "Hausnummer", "Beschreibung"]
+
+def GetReadableEventType(eventtype: str) -> str:
+    # Ich könnte dashier auch in einen one-liner umwandeln aber das würde
+    # die Lesbarkeit verschlechtern
+    if eventtype == EventType.ON_SITE:
+        return "Vor Ort"
+    return "Online"
+
 
 _CSV_PATH: Final[str] = "data"
 _CSV_EVENT: Final[str] = f"{_CSV_PATH}\\events.csv"
@@ -135,29 +143,39 @@ def IsTheSameEvent(*args) -> bool:
                 return False
     return True
 
-def CreateEventFromForm(eventname, epoch: float, organizeremail, country, city,
-                        zipcode: str, street, housenumber: str,
-                        description: str, eventtype: EventType | str) -> None:
+def CreateEventFromForm(eventname, epoch: float, organizeremail, eventtype: str,
+                        country, city, zipcode: str, street, housenumber: str,
+                        description: str) -> None:
     SaveInCSV(eventid=uuid.uuid4(), eventname=eventname, epoch=epoch,
-                    organizeremail=organizeremail, country=country, city=city,
-                    zipcode=zipcode, street=street, housenumber=housenumber,
-                    description=description, eventtype=eventtype)
+              eventtype=eventtype, organizeremail=organizeremail, country=country,
+              city=city, zipcode=zipcode, street=street, housenumber=housenumber,
+              description=description)
 
-def SaveInCSV(eventid, eventname, epoch, organizeremail, country, city, zipcode,
-              street, housenumber, description, eventtype) -> None:
-    if IsTheSameEvent(eventname, epoch, organizeremail, country, city, zipcode,
+def SaveInCSV(eventid, eventname, epoch, eventtype, organizeremail, country, city, zipcode,
+              street, housenumber, description) -> None:
+    if IsTheSameEvent(eventname, epoch, eventtype, organizeremail, country, city, zipcode,
                       street, housenumber, description, eventtype):
         raise errors.EventAlreadyExistsError()
     eventfile_write = open(_CSV_EVENT, "a", newline="")
     # Es lohnt sich nicht, einen extra DictWriter zu benutzen, um nur
     # eine Zeile hinzuzufügen
     writer = csv.writer(eventfile_write, delimiter=",")
-    writer.writerow([eventid, eventname, epoch, organizeremail, country, city,
-                     zipcode, street, housenumber, description, eventtype])
+    writer.writerow([eventid, eventname, epoch,eventtype, organizeremail, country, city,
+                     zipcode, street, housenumber, description])
 
-# TODO
-def ModifyEvent():
-    return NotImplementedError()
+# Quelle: https://stackoverflow.com/a/46130947/18782769
+def ModifyEvent(newevent: Event) -> None:
+    event: Event = GetEventFromId(eventid)
+    reader = list(_getdictreader())
+    for row in reader:
+        if row.get(CSVHeader.EVENTID) == newevent.id:
+            # Skip the Header
+            for index, header in enumerate(CSVHeader.AsList())[1:]:
+                reader[row][header] = list(Event)[index]
+            break
+    eventfile_write = open(_CSV_EVENT, "w", newline="")
+    writer = csv.DictWriter(eventfile_write, fieldnames=fields)
+    writer.writerows(reader)
 
 def DeleteEvent(eventid):
     # Hier werden alle anderen Events (und die Überschriften) gelesen
@@ -170,10 +188,11 @@ def DeleteEvent(eventid):
         if row.get(CSVHeader.EVENTID) == eventid:
             continue
         newCSV.append(row)
-    
+
     eventfile_write= open(_CSV_EVENT, "w", newline="")
     writer = csv.DictWriter(eventfile_write, fieldnames=CSVHeader.AsList(),
                             delimiter=",")
     writer.writerows(newCSV)
 
     entrymanager.DeleteAllEntriesWithEvent(eventid)
+

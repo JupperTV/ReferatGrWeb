@@ -16,8 +16,7 @@
 - [x] **CODE REFACTORING MIT \_getdictreader\_() UND KLASSEN FÜR DIE MANAGER**
 - [x] "Zurück zu xyz"-Knöpfe nach Errors oder POST-Requests zeigen
 - [x] Event-Typen (Online, Lokal)
-- [ ] In /events /entries /myevents eine dropdown einfügen, um zwischen vor Ort und Online zu unterscheiden
+- [x] Output je nach Eventtyp ändern
 - [ ] Event Umänderer
 - [ ] Account Umänderer
 - [ ] Passwort Umänderer
-- [ ] Kleine CSS Verschönerung

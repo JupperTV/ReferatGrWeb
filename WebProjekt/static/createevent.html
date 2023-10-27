@@ -5,7 +5,7 @@
     <title>Eventerstellung</title>
 </head>
 <body>
-    <form action="createevent" method="post">
+    <form action="{{ formlink }}" method="post">
         <div class="input">
             <label for="eventname">Eventname: </label><input type="text" name="eventname" id="eventname">
         </div>
@@ -24,7 +24,6 @@
                 // Ich habe für einen Fehler, der garnicht mal an JavaScript lag, sondern an Microsoft Edge, um die 50 Minuten verschwendet...
                 onchange = function () {
                     eventtypeSelection = document.getElementById("eventtype");
-                    console.log(eventtypeSelection.value);
                     if (eventtypeSelection.value === "{{  EventType.ONLINE }}") {
                         document.getElementById("onsiteinput").setAttribute("hidden","");
                     } else {

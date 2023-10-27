@@ -40,8 +40,8 @@ class Account:
             accountid=d(CSVHeader.ACCOUNTID), email=d(CSVHeader.EMAIL),
             base64password=d(CSVHeader.BASE64PASSWORD),
             firstname=d(CSVHeader.FIRSTNAME), lastname=d(CSVHeader.LASTNAME))
-        
-    
+
+
     def __init__(self, accountid: str, email: str, base64password: str,
                  firstname: str, lastname: str):
         self.accountid = accountid
@@ -81,7 +81,8 @@ def _obfuscateText_(text: bytes) -> bytes:
 # ohne, dass ich jedesmal eine neue Funktion machen muss, wo ich nur
 # den Wert, der gerade gebraucht wird, ausgeben
 def GetAccountFromEmail(email: str) -> Account | None:
-    reader: csv.DictReader = _getdictreader_()
+    reader: csv.DictReader = list(_getdictreader_())
+    account = None
     for row in reader:
         # * Wichtiges Detail:
         # Es wird row.get(...) anstatt row[...] benutzt, weil
@@ -155,7 +156,7 @@ def SaveInCSV(email, originalpassword, firstname, lastname) -> None:
         # in einen str um
         passwordToSave = _obfuscateText_(
             bytes(originalpassword, "unicode_escape")).decode()
-        
+
         # Es kann sein, dass es einen besseren Weg gibt, die Werte aus
         # dem Account Objekt zu speichern
         writer.writerow([accountid, email, passwordToSave,

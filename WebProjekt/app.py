@@ -61,7 +61,7 @@ def register():
         link = flask.url_for("root")
         buttontext = gethomebuttontext()
         return flask.render_template("messageonebutton.html", title=title,
-                                     message=message, link=link, 
+                                     message=message, link=link,
                                      buttontext=buttontext)
 
     try:
@@ -115,7 +115,7 @@ def login():
                                      message=message, backlink=backlink,
                                      homebuttontext=homebuttontext,
                                      backbuttontext=backbuttontext)
-    
+
     title="Login"
     # Diese message Variable und die message Variable von davor, haben
     # nichts miteinander zu tun. Ich benenne sie immer noch nicht um,
@@ -156,11 +156,17 @@ def events():
         loggedin: bool = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN) is not None
         events: list[eventmanager.Event] = eventmanager.GetAllEvents()
         if not events:
-            return flask.render_template("noevents.html",
-                                         homebuttontext=gethomebuttontext())
+            title = "Events"
+            message = "Es wurden noch keine Events erstellt"
+            link = flask.url_for("/")
+            buttontext = gethomebuttontext()
+            return flask.render_template("messageonebutton.html", title=title,
+                                         message=message, link=link,
+                                         buttontext=buttontext)
 
         for event in events:
             event.epoch = eventmanager.EpochToNormalTime(event.epoch)
+            event.eventtype = eventmanager.GetReadableEventType(event.eventtype)
         def getorganizer(event: eventmanager.Event) -> str:
             account = accountmanager.GetAccountFromEmail(event.organizeremail)
             event.description = event.description.replace(";;;", ",")
@@ -170,11 +176,12 @@ def events():
         return flask.render_template("events.html", events=events,
                                      list=list, loggedin=loggedin,
                                      getorganizer=getorganizer,
-                                     enumerate=enumerate, eventmanager=eventmanager,
+                                     enumerate=enumerate,
+                                     eventmanager=eventmanager,
                                      isredirect=isredirect)
 
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
-    
+
     # Das alles wird ausgeführt, wenn die request methode POST ist.
     # Das einzige, dass im Form übergeben wird, ist der button,
     # der die eventid in seinem Namen hat
@@ -199,7 +206,8 @@ def events():
 def createevent():
     if flask.request.method == "GET":
         return flask.render_template("createevent.html",
-                                     EventType=eventmanager.EventType)
+                                     EventType=eventmanager.EventType,
+                                     formlink=flask.url_for("createevent"))
     form: dict[str, str] = flask.request.form
     # * Notiz: Das datetime-local input ist im ISO 860-Format.
     # * Trotzdem gibt das datetime objekt keine Zeitzone zurück.
@@ -214,7 +222,7 @@ def createevent():
     organizeremail = accountmanager.GetAccountFromToken(organizertoken).email
     description = f("description").replace(",", ";;;")
     eventtype = f("eventtype")
-    
+
     # Daten zu einem Ort sind abhängig von eventmanager.EventType
     # bzw. eventmanager.Event.eventtype
     country = ""
@@ -264,7 +272,7 @@ def entries():
     if flask.request.method == "GET":
         accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
         events: list[eventmanager.Event] = entrymanager.GetAllEntriedEventsOfAccount(accountid)
-        
+
         if not events:
             title = "Fehler"
             message = "Du hast noch zu keinem Event eingetragen"
@@ -275,8 +283,12 @@ def entries():
                                          message=message, backlink=backlink,
                                          backbuttontext=backbuttontext,
                                          homebuttontext=homebuttontext)
-            
+
         loggedin = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN) is not None
+
+        for event in events:
+            event.eventtype = eventmanager.GetReadableEventType(event.eventtype)
+            event.epoch = eventmanager.EpochToNormalTime(event.epoch)
 
         def getorganizer(event: eventmanager.Event) -> str:
             account = accountmanager.GetAccountFromEmail(event.organizeremail)
@@ -292,7 +304,7 @@ def entries():
     eventid = list(flask.request.form.keys())[0]
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
     entrymanager.DeleteEntry(accountid, eventid)
-    
+
     title = "Einträge"
     message = f"Dein Eintrag zum Event '{eventmanager.GetEventFromId(eventid).eventname}' wurde erfolgreich gelöscht"
     backlink = flask.url_for("entries")
@@ -316,19 +328,22 @@ def myevents():
             message = "Du hast noch keine Events erstellt"
             backlink = flask.url_for("createevent")
             backbuttontext = "Ein Event erstellen"
-            homebuttontext = gethomebuttontext()                   
+            homebuttontext = gethomebuttontext()
             return flask.render_template("messagetwobuttons.html", title=title,
                                          message=message, backlink=backlink,
                                          backbuttontext=backbuttontext,
                                          homebuttontext=homebuttontext)
+        for event in createdevents:
+            event.epoch = eventmanager.EpochToNormalTime(event.epoch)
+            event.eventtype = eventmanager.GetReadableEventType(event.eventtype)
         return flask.render_template("myevents.html", list=list,
                                      events=createdevents, enumerate=enumerate,
                                      eventmanager=eventmanager)
 
-    # Ein POST Request wird gesendet, wenn ein Event 
+    # Ein POST Request wird gesendet, wenn ein Event gelöscht wird
     eventid = list(flask.request.form.keys())[0]
     eventmanager.DeleteEvent(eventid)
-    
+
     message = "Das Event wurde erfolgreich gelöscht."
     backlink = flask.url_for("myevents")
     backbuttontext = "Zurück zu deinen Events"
@@ -337,6 +352,18 @@ def myevents():
                                  message=message, backlink=backlink,
                                  backbuttontext=backbuttontext,
                                  homebuttontext=homebuttontext())
+
+@app.route("/modifyevent", methods=["GET", "POST"])
+def modifyevent():
+    if flask.request.method == "GET":
+        print(list(flask.request.args.keys())[0])
+        # createevent.html wird wiederverwendet, weil die Inputs
+        # im Grunde genommen gleich sind.
+        return flask.render_template("createevent.html",
+                                     EventType=eventmanager.EventType,
+                                     formlink=flask.url_for("modifyevent"))
+
+    print(dict(flask.request.args))
 
 @app.before_request
 def checkIfUserIsLoggedIn():
@@ -355,3 +382,4 @@ def checkIfUserIsLoggedIn():
 if __name__ == "__main__":
     DEFAULT_HTTP_PORT = 80  # Zur Vermeidung von Magic Numbers
     app.run(port=DEFAULT_HTTP_PORT, debug=True)
+

@@ -15,11 +15,13 @@
             <div class="text" style="margin-left: 1%; text-align: center; font-size: 120%;">
                 <h2><strong>Veranstalter</strong>: {{ getorganizer(event) }}</h2>
             </div>
+            {% for index, key in enumerate(eventmanager.KEYS_FOR_OUTPUT) %}
             <div class="text" style="margin-left: 1%;">
-                {% for index, key in enumerate(eventmanager.KEYS_FOR_OUTPUT) %}
+                {% if list(event)[index] %}
                 <p><strong>{{ key }}</strong>: {{ list(event)[index] }}</p>
-                {% endfor %}
+                {% endif %}
             </div>
+            {% endfor %}
         </div>
         {% if isloggedin %}
         <form action="/entries" method="post" >
