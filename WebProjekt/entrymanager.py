@@ -68,14 +68,15 @@ def DeleteAllEntriesWithEvent(eventid) -> None:
         if row.get(CSVHeader.EVENTID) == eventid:
             continue
         rowsWithoutEvent.append(row)
-    
+
     # * Wichtige Notiz:
     # Die Datei wird direkt nach dem öffnen komplett gelöscht.
     # Bei writer.writerows() wird sie komplett neugeschrieben
-    with open(_CSV_ENTRY, "w", newline="") as entryfile_write:
-        writer = csv.DictWriter(entryfile_write, fieldnames=CSVHeader.AsList(),
-                                delimiter=",")
-        writer.writerows(rowsWithoutEvent)
+    entryfile_write = open(_CSV_ENTRY, "w", newline="")
+    writer = csv.DictWriter(entryfile_write, fieldnames=CSVHeader.AsList(),
+                            delimiter=",")
+    writer.writerow(dict(zip(CSVHeader.AsList(), CSVHeader.AsList())))
+    writer.writerows(rowsWithoutEvent)
 
 def DeleteEntry(accountid: int, eventid: int) -> None:
     reader = _getdictreader_()
@@ -87,7 +88,8 @@ def DeleteEntry(accountid: int, eventid: int) -> None:
             continue
         newCSV.append(row)
 
-    with open(_CSV_ENTRY, "w", newline="") as entryfile_write:
-        writer = csv.DictWriter(entryfile_write, fieldnames=CSVHeader.AsList(),
-                                delimiter=",")
-        writer.writerows(newCSV)
+    entryfile_write = open(_CSV_ENTRY, "w", newline="")
+    writer = csv.DictWriter(entryfile_write, fieldnames=CSVHeader.AsList(),
+                            delimiter=",")
+    writer.writerows(newCSV)
+

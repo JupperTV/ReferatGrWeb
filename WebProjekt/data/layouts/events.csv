@@ -1,1 +1,1 @@
-id,name,epoch,organizer,country,city,zipcode,street,housenumber,description,type
+id,name,epoch,type,organizer,country,city,zipcode,street,housenumber,description

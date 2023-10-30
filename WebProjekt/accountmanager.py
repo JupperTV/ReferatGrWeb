@@ -134,8 +134,10 @@ def PasswordIsValid(originalpassword: str) -> bool:
         return False
     return True
 
+# Der HTML-Typ "email" macht alles für mich
 def EmailIsValid(email: str) -> bool:
-    return re.fullmatch(_REGEX_VALID_EMAIL, email) != _UNSUCCESFUL_MATCH
+    # return re.fullmatch(_REGEX_VALID_EMAIL, email) != _UNSUCCESFUL_MATCH
+    return True
 
 def SaveInCSV(email, originalpassword, firstname, lastname) -> None:
     if not PasswordIsValid(originalpassword):
@@ -159,8 +161,8 @@ def SaveInCSV(email, originalpassword, firstname, lastname) -> None:
 
         # Es kann sein, dass es einen besseren Weg gibt, die Werte aus
         # dem Account Objekt zu speichern
-        writer.writerow([accountid, email, passwordToSave,
-                         firstname, lastname])
+        values = [accountid, email, passwordToSave, firstname, lastname]
+        writer.writerow(dict(zip(CSVHeader.AsList(), values)))
 
 # TODO
 def RemoveAccount():

@@ -7,13 +7,13 @@
 <body>
     <form action="{{ formlink }}" method="post">
         <div class="input">
-            <label for="eventname">Eventname: </label><input type="text" name="eventname" id="eventname" value="{{ name }}">
+            <label for="name">Eventname: </label><input type="text" name="name" id="name" value="{{ name }}" required>
         </div>
         <div class="date">
-            <label for="datetime">Datum und Uhrzeit: </label><input type="datetime-local" name="datetime" id="datetime" value="{{ datetime }}">
+            <label for="datetime">Datum und Uhrzeit: </label><input type="datetime-local" name="datetime" id="datetime" value="{{ datetime }}" required>
         </div>
         <div class="dropdown">
-            <label for="eventtype">Art des Treffens: </label><select name="eventtype" id="eventtype" onchange="onchange" value="{{ type }}">
+            <label for="type">Art des Treffens: </label><select name="type" id="type" onchange="onchange" value="{{ type }}" required>
                 <option value="{{ EventType.ON_SITE }}">Vor Ort</option>
                 <option value="{{ EventType.ONLINE }}">Online</option>
             </select>
@@ -23,7 +23,7 @@
                 // Ich habe, durch das einbinden von JavaScript, für einen Fehler, der garnicht mal an JavaScript lag,
                 // sondern an Microsoft Edge, um die 50 Minuten verschwendet...
                 onchange = function () {
-                    eventtypeSelection = document.getElementById("eventtype");
+                    eventtypeSelection = document.getElementById("type");
                     if (eventtypeSelection.value === "{{  EventType.ONLINE }}") {
                         document.getElementById("onsiteinput").setAttribute("hidden","");
                     } else {

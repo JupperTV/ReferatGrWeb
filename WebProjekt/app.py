@@ -31,6 +31,7 @@ def index():
 @app.route("/dashboard", methods=["GET"])
 def dashboard():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
+    print(token)
     email: str | None = accountmanager.GetAccountFromToken(token).email
     return flask.render_template("dashboard.html", email=email)
 
@@ -46,7 +47,7 @@ def register():
         return flask.render_template("register.html")
     form: dict = flask.request.form
     message = None
-    if accountmanager.EmailIsValid(form["email"]):
+    if not accountmanager.EmailIsValid(form["email"]):
         message = "Die E-Mail ist ungültig"
     if accountmanager.UserExists(form["email"]):
         message = "Es gibt schon einen Account, der mit dieser E-Mail registriert ist" if not message else message
@@ -158,7 +159,7 @@ def events():
         if not events:
             title = "Events"
             message = "Es wurden noch keine Events erstellt"
-            link = flask.url_for("/")
+            link = flask.url_for("root")
             buttontext = gethomebuttontext()
             return flask.render_template("messageonebutton.html", title=title,
                                          message=message, link=link,
@@ -169,8 +170,6 @@ def events():
             event.eventtype = eventmanager.GetReadableEventType(event.eventtype)
         def getorganizer(event: eventmanager.Event) -> str:
             account = accountmanager.GetAccountFromEmail(event.organizeremail)
-            print(event.description)
-            print(f"{list(event)=}")
             event.description = event.description.replace(";;;", ",")
             return f"{account.firstname} {account.lastname}"
         # isredirect is set on /createentry if entrymanager.DidAccountAlreadyEnter()
@@ -215,11 +214,10 @@ def FinishCreateEvent(cookies: dict, form: dict[str, str]) -> dict[str, str]:
     organizeremail = accountmanager.GetAccountFromToken(organizertoken).email
 
     f = lambda s: form[s]
-    eventname = f("eventname")
-    datetime: time.struct_time = time.strptime(f("datetime"), "%Y-%m-%dT%H:%M")
-    epoch: float = float(time.mktime(datetime))
-    description = f("description").replace(",", ";;;")
-    eventtype = f("eventtype")
+    eventname = f(eventmanager.CSVHeader.NAME)
+    epoch: float = eventmanager.InputTimeToEpoch(f("datetime"))
+    description = f(eventmanager.CSVHeader.DESCRIPTION).replace(",", ";;;")
+    eventtype = f(eventmanager.CSVHeader.EVENTTYPE)
 
     # Daten zu einem Ort sind abhängig von eventmanager.EventType
     # bzw. eventmanager.Event.eventtype
@@ -229,11 +227,11 @@ def FinishCreateEvent(cookies: dict, form: dict[str, str]) -> dict[str, str]:
     street = ""
     housenumber: str = ""
     if eventtype == eventmanager.EventType.ON_SITE:
-        country = f("country")
-        city = f("city")
-        zipcode: str = f("zipcode")
-        street = f("street")
-        housenumber: str = f("housenumber")
+        country = f(eventmanager.CSVHeader.COUNTRY)
+        city = f(eventmanager.CSVHeader.CITY)
+        zipcode: str = f(eventmanager.CSVHeader.ZIPCODE)
+        street = f(eventmanager.CSVHeader.STREET)
+        housenumber: str = f(eventmanager.CSVHeader.HOUSENUMBER)
 
     # Etwas bessere Lesbarkeit
     h = eventmanager.CSVHeader
@@ -253,10 +251,11 @@ def createevent():
                                      formlink=flask.url_for("createevent"),
                                      ismodify=False,
                                      eventtype = eventmanager.EventType.ON_SITE)
-    form: dict[str, str] = flask.request.form
-    eventdata: dict = FinishCreateEvent(form)
+    form: dict[str, str] = dict(flask.request.form)
+    eventdata: dict = FinishCreateEvent(flask.request.cookies, form)
     try:
-        eventmanager.CreateEventFromForm(*eventdata)
+        pass
+        eventmanager.CreateEventFromForm(*eventdata.values())
     except errors.EventAlreadyExistsError:
         title = "Fehler"
         message = "Das Event existiert bereits"
@@ -269,7 +268,8 @@ def createevent():
                                      homebuttontext=homebuttontext)
 
     eventname = form.get(eventmanager.CSVHeader.NAME)
-    organizeremail = form.get(eventmanager.CSVHeader.ORGANIZER_EMAIL)
+    token = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
+    organizeremail = accountmanager.GetAccountFromToken(token).email
     title="Eventerstellung"
     message = f"Das Event '{eventname}' wurde von dir mit der Email {organizeremail} erstellt"
     backlink = flask.url_for("events")
@@ -357,7 +357,7 @@ def myevents():
     # Ein POST Request wird gesendet, wenn ein Event gelöscht wird
     eventid = list(flask.request.form.keys())[0]
     eventmanager.DeleteEvent(eventid)
-
+    title = "Meine Events"
     message = "Das Event wurde erfolgreich gelöscht."
     backlink = flask.url_for("myevents")
     backbuttontext = "Zurück zu deinen Events"
@@ -365,7 +365,7 @@ def myevents():
     return flask.render_template("messagetwobuttons.html", title=title,
                                  message=message, backlink=backlink,
                                  backbuttontext=backbuttontext,
-                                 homebuttontext=homebuttontext())
+                                 homebuttontext=homebuttontext)
 
 @app.route("/modifyevent", methods=["GET", "POST"])
 def modifyevent():
@@ -377,18 +377,17 @@ def modifyevent():
         print("Form:", dict(flask.request.form))
         eventid = list(flask.request.args.keys())[0]
         originalevent = eventmanager.GetEventFromId(eventid)
-        eventdict = dict(zip(eventmanager.CSVHeader.AsList(), list(originalevent)))
-        # eventdict.get(eventmanager.CSVHeader.)
-        isonline = eventdict.get(eventmanager.CSVHeader.EVENTTYPE) == eventmanager.EventType.ONLINE
-        eventdict[eventmanager.CSVHeader.EPOCH] = time.ctime(float(eventdict.get(eventmanager.CSVHeader.EPOCH)))
-        print(f"{eventdict=}")
+        # Damit ich weniger schreiben muss
+        headers = eventmanager.CSVHeader
+        eventdict = dict(zip(headers.AsList(), list(originalevent)))
+        isonline = eventdict.get(headers.EVENTTYPE) == eventmanager.EventType.ONLINE
+        eventdict[headers.EPOCH] = eventmanager.EpochToInputTime(eventdict[headers.EPOCH])
         # createevent wird wiederverwendet, weil die Inputs gleich sind.
         return flask.render_template("createevent.html",
                                      ismodify=True, eventid=eventid,
                                      EventType=eventmanager.EventType,
                                      formlink=flask.url_for("modifyevent"),
-                                     isonline = isonline,
-                                     **eventdict)
+                                     isonline = isonline, **eventdict)
 
     # eventdata: dict = FinishCreateEvent(form)
     # eventid = flask.request.args.keys()

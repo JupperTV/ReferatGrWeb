@@ -5,6 +5,7 @@
 
 import csv
 from typing import Final, Iterable
+import time
 from datetime import datetime
 import uuid
 
@@ -93,13 +94,19 @@ _CSV_PATH: Final[str] = "data"
 _CSV_EVENT: Final[str] = f"{_CSV_PATH}\\events.csv"
 
 def _getdictreader_() -> csv.DictReader:
-    entryfile_read = open(_CSV_EVENT, "r", newline="")
-    return csv.DictReader(entryfile_read, delimiter=",")
+    eventfile_read = open(_CSV_EVENT, "r", newline="")
+    return csv.DictReader(eventfile_read, delimiter=",")
 
 def EpochToNormalTime(epoch: float | str) -> str:
     readabledate = datetime.fromtimestamp(float(epoch))
     return babel.dates.format_datetime(readabledate, locale="de_DE",
                                        format="dd.MM.yyyy 'um' HH:mm")
+
+def EpochToInputTime(epoch: float | str):
+    return time.strftime("%Y-%m-%dT%H:%M", time.localtime(float(epoch)))
+
+def InputTimeToEpoch(inputtime: str):
+    return float(time.mktime(time.strptime(inputtime, "%Y-%m-%dT%H:%M")))
 
 def GetAllEventsCreatedByOrganizer(organizeremail: str) -> list[Event]:
     reader = _getdictreader_()
@@ -131,7 +138,9 @@ def GetEventFromId(eventid) -> Event | None:
     return None
 
 def IsTheSameEvent(*args) -> bool:
-    reader = _getdictreader_()
+    reader = list(_getdictreader_())
+    if not reader:
+        return False
     for row in reader:
         # Falls ein Benutzer die exakt selben Daten nochmal eingibt,
         # werden nur EventIDs unterschiedlich sein.
@@ -142,7 +151,7 @@ def IsTheSameEvent(*args) -> bool:
                 return False
     return True
 
-def CreateEventFromForm(eventname, epoch: float, organizeremail, eventtype: str,
+def CreateEventFromForm(eventname, epoch: float, eventtype: str, organizeremail,
                         country, city, zipcode: str, street, housenumber: str,
                         description: str) -> None:
     SaveInCSV(eventid=uuid.uuid4(), eventname=eventname, epoch=epoch,
@@ -159,8 +168,8 @@ def SaveInCSV(eventid, eventname, epoch, eventtype, organizeremail, country, cit
     # Es lohnt sich nicht, einen extra DictWriter zu benutzen, um nur
     # eine Zeile hinzuzufügen
     writer = csv.writer(eventfile_write, delimiter=",")
-    writer.writerow([eventid, eventname, epoch,eventtype, organizeremail, country, city,
-                     zipcode, street, housenumber, description])
+    writer.writerow([eventid, eventname, epoch,eventtype, organizeremail,
+                     country, city, zipcode, street, housenumber, description])
 
 # Quelle: https://stackoverflow.com/a/46130947/18782769
 def ModifyEvent(newevent: Event) -> None:
@@ -172,8 +181,10 @@ def ModifyEvent(newevent: Event) -> None:
             for index, header in enumerate(CSVHeader.AsList())[1:]:
                 reader[row][header] = list(Event)[index]
             break
+
     eventfile_write = open(_CSV_EVENT, "w", newline="")
-    writer = csv.DictWriter(eventfile_write, fieldnames=fields)
+    writer = csv.DictWriter(eventfile_write, fieldnames=CSVHeader.AsList())
+    writer.writerow(dict(zip(CSVHeader.AsList(), CSVHeader.AsList())))
     writer.writerows(reader)
 
 def DeleteEvent(eventid):
@@ -191,6 +202,8 @@ def DeleteEvent(eventid):
     eventfile_write= open(_CSV_EVENT, "w", newline="")
     writer = csv.DictWriter(eventfile_write, fieldnames=CSVHeader.AsList(),
                             delimiter=",")
+
+    writer.writerow(dict(zip(CSVHeader.AsList(), CSVHeader.AsList())))
     writer.writerows(newCSV)
 
     entrymanager.DeleteAllEntriesWithEvent(eventid)
