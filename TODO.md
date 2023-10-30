@@ -18,9 +18,9 @@
 - [x] Event-Typen (Online, Lokal)
 - [x] Output je nach Eventtyp ändern
 - [x] **ALLES ZUM LAUFEN BRINGEN**
-- [ ] Event Umänderer
+- [x] Event Umänderer
   - [x] Daten des originalen Events in html inputs tun
-  - [ ] Zeit in /modifyevent fixen
-- [ ] Account Umänderer
-- [ ] Passwort Umänderer
+  - [x] Zeit in /modifyevent fixen (Leider mit JavaScript)
+  - [x] Ändern
 - [ ] Eintrag Löschen
+

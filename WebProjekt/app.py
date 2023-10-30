@@ -373,8 +373,6 @@ def modifyevent():
     # args. des GET Requests
     # Die Eventdaten werden als Form übergeben
     if flask.request.method == "GET":
-        print("Args:", dict(flask.request.args))
-        print("Form:", dict(flask.request.form))
         eventid = list(flask.request.args.keys())[0]
         originalevent = eventmanager.GetEventFromId(eventid)
         # Damit ich weniger schreiben muss
@@ -387,16 +385,17 @@ def modifyevent():
                                      ismodify=True, eventid=eventid,
                                      EventType=eventmanager.EventType,
                                      formlink=flask.url_for("modifyevent"),
-                                     isonline = isonline, **eventdict)
+                                     isonline = isonline, formatedTime=eventdict[headers.EPOCH],
+                                     **eventdict)
 
-    # eventdata: dict = FinishCreateEvent(form)
-    # eventid = flask.request.args.keys()
-    # eventdata.update({eventmanager.CSVHeader.EVENTID: eventid})
-    # event = eventmanager.Event.InitFromDict(eventdata)
-    # eventmanager.ModifyEvent(event)
-    print("Args:", dict(flask.request.args))
-    print("Form:", dict(flask.request.form))
-    return "Ende"
+
+    eventdata: dict = FinishCreateEvent(dict(flask.request.cookies),
+                                        dict(flask.request.form))
+    eventid = dict(flask.request.form).get("eventid")
+    eventdata.update({eventmanager.CSVHeader.EVENTID: eventid})
+    event = eventmanager.Event.InitFromDict(eventdata)
+    eventmanager.ModifyEvent(event)
+    return ":)"
 
 
 @app.before_request

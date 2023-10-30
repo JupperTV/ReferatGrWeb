@@ -172,14 +172,14 @@ def SaveInCSV(eventid, eventname, epoch, eventtype, organizeremail, country, cit
                      country, city, zipcode, street, housenumber, description])
 
 # Quelle: https://stackoverflow.com/a/46130947/18782769
-def ModifyEvent(newevent: Event) -> None:
-    event: Event = GetEventFromId(eventid)
-    reader = list(_getdictreader())
+def ModifyEvent(event: Event) -> None:
+    reader = list(_getdictreader_())
+    print(f"{reader=}")
     for row in reader:
-        if row.get(CSVHeader.EVENTID) == newevent.id:
-            # Skip the Header
-            for index, header in enumerate(CSVHeader.AsList())[1:]:
-                reader[row][header] = list(Event)[index]
+        if row.get(CSVHeader.EVENTID) == event.eventid:
+            for index, header in enumerate(CSVHeader.AsList()[1:]):
+                print(f"{index=}")
+                reader[reader.index(row)][header] = list(event)[index]
             break
 
     eventfile_write = open(_CSV_EVENT, "w", newline="")

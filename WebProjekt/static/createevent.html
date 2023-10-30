@@ -55,12 +55,17 @@
         <div class="submit">
             {% if ismodify %}
             <input type="hidden" name="eventid" value="{{ eventid }}">
-            {% endif %}
+            <input type="submit" id="submit" name="submit" value="Änderungen speichern">
+            {% else %}
             <input type="submit" id="submit" name="submit" value="Event erstellen">
+            {% endif %}
         </div>
     </form>
     {% if isonline %}
     <script>document.getElementById("onsiteinput").setAttribute("hidden","");</script>
+    {% endif %}
+    {% if ismodify %}
+    <script type="text/javascript">document.getElementById("datetime").value = "{{ formatedTime }}"</script>
     {% endif %}
     </body>
     </html>
