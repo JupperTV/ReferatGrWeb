@@ -21,6 +21,7 @@
 - [x] Event Umänderer
   - [x] Daten des originalen Events in html inputs tun
   - [x] Zeit in /modifyevent fixen (Leider mit JavaScript)
-  - [x] Ändern
-- [ ] Eintrag Löschen
+  - [x] Das eigentlicht Ändern
+  - [x] Irgendwie wird die Beschreibung beim speichern der Änderung nicht mitgespeichert und die ID 2x hintereinander
+- [x] Eintrag Löschen
 

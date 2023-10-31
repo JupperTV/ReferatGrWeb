@@ -1,10 +1,5 @@
 #!/usr/bin/python
 
-# ! NACHHER LÖSCHEN
-from os import system
-system("cls")
-del system
-
 import time
 from typing import Final
 
@@ -31,7 +26,6 @@ def index():
 @app.route("/dashboard", methods=["GET"])
 def dashboard():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
-    print(token)
     email: str | None = accountmanager.GetAccountFromToken(token).email
     return flask.render_template("dashboard.html", email=email)
 
@@ -44,7 +38,9 @@ def gethomebuttontext() -> str:
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if flask.request.method == "GET":
-        return flask.render_template("register.html")
+        homebuttontext = gethomebuttontext()
+        return flask.render_template("register.html",
+                                    homebuttontext=homebuttontext)
     form: dict = flask.request.form
     message = None
     if not accountmanager.EmailIsValid(form["email"]):
@@ -60,10 +56,10 @@ def register():
         # checkIfUserIsLoggedIn() überprüft selber, ob "/" zu /index
         # oder zu /dashboard umleiten soll
         link = flask.url_for("root")
-        buttontext = gethomebuttontext()
+        homebuttontext = gethomebuttontext()
         return flask.render_template("messageonebutton.html", title=title,
                                      message=message, link=link,
-                                     buttontext=buttontext)
+                                     homebuttontext=homebuttontext)
 
     try:
         accountmanager.SaveInCSV(form["email"], form["password"],
@@ -97,7 +93,8 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if flask.request.method == "GET":
-        return flask.render_template("login.html")
+        homebuttontext = gethomebuttontext()
+        return flask.render_template("login.html", homebuttontext=homebuttontext)
 
     form = flask.request.form
     message = None
@@ -160,10 +157,10 @@ def events():
             title = "Events"
             message = "Es wurden noch keine Events erstellt"
             link = flask.url_for("root")
-            buttontext = gethomebuttontext()
+            homebuttontext = gethomebuttontext()
             return flask.render_template("messageonebutton.html", title=title,
                                          message=message, link=link,
-                                         buttontext=buttontext)
+                                         homebuttontext=homebuttontext)
 
         for event in events:
             event.epoch = eventmanager.EpochToNormalTime(event.epoch)
@@ -174,12 +171,14 @@ def events():
             return f"{account.firstname} {account.lastname}"
         # isredirect is set on /createentry if entrymanager.DidAccountAlreadyEnter()
         isredirect = flask.request.args.get("isredirect")
+        homebuttontext = gethomebuttontext()
         return flask.render_template("events.html", events=events,
                                      list=list, loggedin=loggedin,
                                      getorganizer=getorganizer,
                                      enumerate=enumerate,
                                      eventmanager=eventmanager,
-                                     isredirect=isredirect)
+                                     isredirect=isredirect,
+                                     homebuttontext=homebuttontext)
 
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
 
@@ -246,11 +245,13 @@ def FinishCreateEvent(cookies: dict, form: dict[str, str]) -> dict[str, str]:
 @app.route("/createevent", methods=["GET", "POST"])
 def createevent():
     if flask.request.method == "GET":
+        homebuttontext = gethomebuttontext()
         return flask.render_template("createevent.html",
                                      EventType=eventmanager.EventType,
                                      formlink=flask.url_for("createevent"),
                                      ismodify=False,
-                                     eventtype = eventmanager.EventType.ON_SITE)
+                                     eventtype = eventmanager.EventType.ON_SITE,
+                                     homebuttontext=homebuttontext)
     form: dict[str, str] = dict(flask.request.form)
     eventdata: dict = FinishCreateEvent(flask.request.cookies, form)
     try:
@@ -309,12 +310,13 @@ def entries():
             event.description = event.description.replace(";;;", ",")
             return f"{account.firstname} {account.lastname}"
 
+        homebuttontext = gethomebuttontext()
         return flask.render_template(
                 "entries.html", events=events, enumerate=enumerate,
                 loggedin=loggedin, eventmanager=eventmanager, list=list,
-                getorganizer=getorganizer)
+                getorganizer=getorganizer, homebuttontext=homebuttontext)
 
-    # Ab hier ist der code für POST Requests
+
     eventid = list(flask.request.form.keys())[0]
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
     entrymanager.DeleteEntry(accountid, eventid)
@@ -350,9 +352,12 @@ def myevents():
         for event in createdevents:
             event.epoch = eventmanager.EpochToNormalTime(event.epoch)
             event.eventtype = eventmanager.GetReadableEventType(event.eventtype)
+
+        homebuttontext = gethomebuttontext()
         return flask.render_template("myevents.html", list=list,
                                      events=createdevents, enumerate=enumerate,
-                                     eventmanager=eventmanager)
+                                     eventmanager=eventmanager,
+                                     homebuttontext=homebuttontext)
 
     # Ein POST Request wird gesendet, wenn ein Event gelöscht wird
     eventid = list(flask.request.form.keys())[0]
@@ -380,12 +385,15 @@ def modifyevent():
         eventdict = dict(zip(headers.AsList(), list(originalevent)))
         isonline = eventdict.get(headers.EVENTTYPE) == eventmanager.EventType.ONLINE
         eventdict[headers.EPOCH] = eventmanager.EpochToInputTime(eventdict[headers.EPOCH])
+        homebuttontext = gethomebuttontext()
         # createevent wird wiederverwendet, weil die Inputs gleich sind.
         return flask.render_template("createevent.html",
                                      ismodify=True, eventid=eventid,
                                      EventType=eventmanager.EventType,
                                      formlink=flask.url_for("modifyevent"),
-                                     isonline = isonline, formatedTime=eventdict[headers.EPOCH],
+                                     isonline = isonline,
+                                     homebuttontext=homebuttontext,
+                                     formatedTime=eventdict[headers.EPOCH],
                                      **eventdict)
 
 
@@ -395,24 +403,38 @@ def modifyevent():
     eventdata.update({eventmanager.CSVHeader.EVENTID: eventid})
     event = eventmanager.Event.InitFromDict(eventdata)
     eventmanager.ModifyEvent(event)
-    return ":)"
+
+    title = "Meine Events"
+    message = f"Das Event '{eventdata["name"]}' wurde erfolgreich geupdated"
+    backlink = flask.url_for("myevents")
+    backbuttontext = "Zurück zu den Events"
+    homebuttontext = gethomebuttontext()
+
+    return flask.render_template("messagetwobuttons.html", title=title,
+                                 message=message, backlink=backlink,
+                                 backbuttontext=backbuttontext,
+                                 homebuttontext=homebuttontext)
 
 
 @app.before_request
 def checkIfUserIsLoggedIn():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
-    allowedSitesIfNotLoggedIn: list[str] = ["index","register","login","events"]
-    # Durch dieses if-Statement habe ich, ohne es zu bemerken,
-    # verhindert, dass Seiten, die garnicht existieren, wie z.B. /abcde,
-    # den error code 404 ausgeben
-    if (not token) and (flask.request.endpoint not in allowedSitesIfNotLoggedIn):
+    allowedSitesIfLoggedOut: list[str] = ["index","register","login","events"]
+    # Durch dieses if-Statement wird verhindert, dass Seiten,
+    # die garnicht existieren, wie z.B. /abcde, error code 404 ausgeben,
+    # sondern zum index oder zum dashboard umleiten
+    loggedin = bool(token)
+    if not loggedin and flask.request.endpoint not in allowedSitesIfLoggedOut:
         return flask.redirect(flask.url_for("index"))
-    if token and flask.request.endpoint == "index":
+    allowedSiteIfLoggedIn: list[str] = ["dashboard","register","login","logout",
+                                        "events","createevent","entries",
+                                        "myevents","modifyevent"]
+    if loggedin and flask.request.endpoint not in allowedSiteIfLoggedIn:
         return flask.redirect(flask.url_for("dashboard"))
     # Nicht wird ausgegeben
 
 
 if __name__ == "__main__":
-    DEFAULT_HTTP_PORT = 80  # Zur Vermeidung von Magic Numbers
+    DEFAULT_HTTP_PORT = 80
     app.run(port=DEFAULT_HTTP_PORT, debug=True)
 

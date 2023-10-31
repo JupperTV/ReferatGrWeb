@@ -91,5 +91,7 @@ def DeleteEntry(accountid: int, eventid: int) -> None:
     entryfile_write = open(_CSV_ENTRY, "w", newline="")
     writer = csv.DictWriter(entryfile_write, fieldnames=CSVHeader.AsList(),
                             delimiter=",")
+
+    writer.writerow(dict(zip(CSVHeader.AsList(), CSVHeader.AsList())))
     writer.writerows(newCSV)
 

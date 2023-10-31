@@ -83,11 +83,7 @@ KEYS_FOR_OUTPUT = ["Eventnummer", "Eventname", "Datum", "Eventtyp",
            "Hausnummer", "Beschreibung"]
 
 def GetReadableEventType(eventtype: str) -> str:
-    # Ich könnte dashier auch in einen one-liner umwandeln aber das würde
-    # die Lesbarkeit verschlechtern
-    if eventtype == EventType.ON_SITE:
-        return "Vor Ort"
-    return "Online"
+    return "Vor Ort" if eventtype == EventType.ON_SITE else "Online"
 
 
 _CSV_PATH: Final[str] = "data"
@@ -171,16 +167,13 @@ def SaveInCSV(eventid, eventname, epoch, eventtype, organizeremail, country, cit
     writer.writerow([eventid, eventname, epoch,eventtype, organizeremail,
                      country, city, zipcode, street, housenumber, description])
 
-# Quelle: https://stackoverflow.com/a/46130947/18782769
 def ModifyEvent(event: Event) -> None:
-    reader = list(_getdictreader_())
-    print(f"{reader=}")
+    reader: list[dict] = list(_getdictreader_())
     for row in reader:
         if row.get(CSVHeader.EVENTID) == event.eventid:
-            for index, header in enumerate(CSVHeader.AsList()[1:]):
-                print(f"{index=}")
+            for index, header in enumerate(CSVHeader.AsList()):
                 reader[reader.index(row)][header] = list(event)[index]
-            break
+            break  # Das Event, das gesucht wurde, wurde schon gefunden
 
     eventfile_write = open(_CSV_EVENT, "w", newline="")
     writer = csv.DictWriter(eventfile_write, fieldnames=CSVHeader.AsList())
@@ -199,7 +192,7 @@ def DeleteEvent(eventid):
             continue
         newCSV.append(row)
 
-    eventfile_write= open(_CSV_EVENT, "w", newline="")
+    eventfile_write = open(_CSV_EVENT, "w", newline="")
     writer = csv.DictWriter(eventfile_write, fieldnames=CSVHeader.AsList(),
                             delimiter=",")
 
