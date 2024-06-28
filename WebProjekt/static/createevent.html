@@ -19,7 +19,7 @@
                 <label for="datetime">Date and time: </label><input type="datetime-local" name="datetime" id="datetime" value="{{ datetime }}" required>
             </div>
             <div class="dropdown">
-                <label for="type">Location:</label><select name="type" id="type" onchange="onchange" value="{{ type }}" required>
+                <label for="type">Event type:</label><select name="type" id="type" onchange="onchange" value="{{ type }}" required>
                     <option value="{{ EventType.ON_SITE }}">Vor Ort</option>
                     <option value="{{ EventType.ONLINE }}">Online</option>
                 </select>
