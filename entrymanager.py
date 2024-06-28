@@ -16,7 +16,8 @@ _CSV_ENTRY: Final[str] = f"{_CSV_PATH}\\entries.csv"
 
 # * Note:
 # * I don't have a class for the entries, like I did for the accounts
-# * and the events, because a dataset consists of 3 ids anyway.
+# * and the events, because a dataset for an entry only consists of 3
+# * ids anyway.
 
 class CSVHeader:
     ENTRYID: Final[str] = "id"

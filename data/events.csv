@@ -1,4 +1,0 @@
-id,name,epoch,type,organizer,country,city,zipcode,street,housenumber,description
-569039fe-ce17-43d6-b816-e8b8bdbb13e2,Event 2,1698316200.0,onsite,m@r.co,Deutschland,Duessi,56789,Irgendeinestrasse,34,empty
-4a4293ef-ba5b-425a-96cf-df74a9de845c,Vorlesung 3,1703973600.0,onsite,m2@r.co,USA,L.A.,67890,Rockefeller street,56,empty
-ed3bdbcc-64c6-4879-9b81-968e0ac80eb8,onlinevent,1698955200.0,online,m@r.co,,,,,,schreib

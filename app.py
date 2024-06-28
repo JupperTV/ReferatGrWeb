@@ -136,7 +136,9 @@ def login():
 # be done
 @app.route("/logout", methods=["GET"])
 def logout():
-    email = accountmanager.GetAccountFromToken(COOKIE_NAME_LOGIN_TOKEN)
+    accountmanager.Account
+    email = accountmanager.GetAccountFromToken(
+            flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)).email
     title = "Log out"
     message = f"The account with the e-mail {email} logged out successfully"
     link = flask.url_for("index")
@@ -233,7 +235,7 @@ def FinishCreateEvent(cookies: dict, form: dict[str, str]) -> dict[str, str]:
 
     # Better readability
     h = eventmanager.CSVHeader
-    # The only header that isn't being returned is the id that gets
+    # The only header that isn't being returned is the id, which gets
     # created by eventmanger
     return { h.NAME: eventname, h.EPOCH: epoch, h.EVENTTYPE: eventtype,
              h.ORGANIZER_EMAIL: organizeremail, h.COUNTRY: country, h.CITY: city,
