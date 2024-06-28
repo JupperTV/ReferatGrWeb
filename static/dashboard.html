@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <style>.text{font-family: Arial, Helvetica, sans-serif} .header{font-family: Arial;}</style>
+    <h1 style="margin: auto;width: 50%;padding: 10px;text-align: center;">Dashboard von {{ email }}</h1>
+
+    <style>
+        .buttons{
+            align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .button{
+            /* border: 5px; */
+            margin: 5px;
+        }
+    </style>
+    <div class="buttons">
+        <form action="/events" method="get">
+            <div class="button">
+                <input type="submit" value="Events ansehen und eintragen">
+            </div>
+        </form>
+        <form action="/createevent" method="get">
+            <div class="button">
+                <input type="submit" value="Eine neues Event erstellen">
+            </div>
+        </form>
+        <form action="/entries" method="get">
+            <div class="button">
+                <input type="submit" value="Eingetragene Events">
+            </div>
+        </form>
+        <form action="/myevents" method="get">
+            <div class="button">
+                <input type="submit" value="Meine Events">
+            </div>
+        </form>
+        <form action="/login" method="get">
+            <div class="button">
+                <input type="submit" value="In einen anderen Account einloggen">
+            </div>
+        </form>
+        <form action="/logout" method="get">
+            <div class="button">
+                <input type="submit" value="Ausloggen">
+            </div>
+        </form>
+        <form action="/register" method="get">
+            <div class="button">
+                <input type="submit" value="Ein neues Account erstellen">
+            </div>
+        </form>
+    </div>
+</body>
+</html>
