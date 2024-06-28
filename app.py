@@ -79,10 +79,10 @@ def register():
     title = "Register"
     message=f"The registration was succesful. Logged in with e-mail {form["email"]}"
     link = flask.url_for("dashboard")
-    buttontext = "To dashboard"
+    homebuttontext = "To dashboard"
     response: flask.Response = flask.make_response(
         flask.render_template("messageonebutton.html", title=title, message=message,
-                              link=link, buttontext=buttontext)
+                              link=link, homebuttontext=homebuttontext)
     )
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
                         value=accountmanager.GetAccountFromEmail(
@@ -123,10 +123,10 @@ def login():
     # for the message are also called message
     message = f"You are now logged in with the e-mail {form["email"]}"
     link = flask.url_for("dashboard")
-    buttontext = "To dashboard"
+    homebuttontext = "To dashboard"
     response: flask.Response = flask.make_response(
         flask.render_template("messageonebutton.html", title=title, link=link,
-                              message=message, buttontext=buttontext))
+                              message=message, homebuttontext=homebuttontext))
     response.set_cookie(key=COOKIE_NAME_LOGIN_TOKEN,
                         value=accountmanager.GetAccountFromEmail(
                             form["email"]).accountid)
@@ -140,10 +140,10 @@ def logout():
     title = "Log out"
     message = f"The account with the e-mail {email} logged out successfully"
     link = flask.url_for("index")
-    buttontext = "Back to home page"
+    homebuttontext = "Back to home page"
     resp = flask.Response(
         flask.render_template("messageonebutton.html", title=title, link=link,
-                              message=message, buttontext=buttontext))
+                              message=message, homebuttontext=homebuttontext))
     resp.delete_cookie(COOKIE_NAME_LOGIN_TOKEN)
     return resp
 
