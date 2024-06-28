@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=2.0">
-    <title>Meine Events</title>
+    <title>My events</title>
 </head>
 <body>
     <div>
@@ -13,7 +13,7 @@
     <div>
         <style>.text{font-family: Arial, Helvetica, sans-serif} .header{font-family: Arial;}</style>
         <div class="header" style="margin: auto;width: 50%;padding: 10px;text-align: center;">
-            <h1>Meine Events</h1>
+            <h1>My events</h1>
         </div>
         {% for event in events %}
         <div class="wholeevent" style="margin: 25%; margin-bottom: 2%; margin-top: 2%;">
@@ -27,10 +27,10 @@
                 {% endfor %}
             </div>
             <form action="/myevents" method="post" >
-                <input type="submit" value="Event löschen" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
+                <input type="submit" value="Delete event" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
             </form>
             <form action="/modifyevent" method="get">
-                <input type="submit" value="Eventdetails ändern" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
+                <input type="submit" value="Change event details" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
             </form>
         </div>
         {% endfor %}

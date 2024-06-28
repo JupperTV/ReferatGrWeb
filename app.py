@@ -3,7 +3,7 @@
 import time
 from typing import Final
 
-import flask  # Das Framework
+import flask  # The framework
 
 import accountmanager
 import entrymanager
@@ -31,9 +31,9 @@ def dashboard():
 
 def gethomebuttontext() -> str:
         if flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN):
-            return "Zurück zum Dashboard"
+            return "Back to dashboard"
         else:
-            return "Zurück zur Startseite"
+            return "Back to home page"
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -44,17 +44,17 @@ def register():
     form: dict = flask.request.form
     message = None
     if not accountmanager.EmailIsValid(form["email"]):
-        message = "Die E-Mail ist ungültig"
+        message = "Invalid e-mail"
     if accountmanager.UserExists(form["email"]):
-        message = "Es gibt schon einen Account, der mit dieser E-Mail registriert ist" if not message else message
+        message = "An account with this e-mail already exists" if not message else message
     if form["password"] != form["repeatpassword"]:
-        message = "Die Passwörter stimmen nicht über ein" if not message else message
+        message = "The passwords do not match" if not message else message
     if not accountmanager.PasswordIsValid(form["password"]):
-        message = "Das Passwort ist ungültig" if not message else message
-    if message:  # Einer der if-Statements war True
-        title = "Registrierung"
-        # checkIfUserIsLoggedIn() überprüft selber, ob "/" zu /index
-        # oder zu /dashboard umleiten soll
+        message = "Invalid password" if not message else message
+    if message:  # This is true if a previous if statements was true
+        title = "Regiser"
+        # checkIfUserIsLoggedIn() checks if "/" should redirect to
+        # /index or /dashboard
         link = flask.url_for("root")
         homebuttontext = gethomebuttontext()
         return flask.render_template("messageonebutton.html", title=title,
@@ -66,8 +66,8 @@ def register():
                                  form["firstname"], form["lastname"])
     except errors.AccountAlreadyExistsError:
         homebuttontext = gethomebuttontext()
-        backbuttontext = "Zurück zur Registrierung"
-        message = "Ein Account mit dieser E-Mail ist bereits registriert"
+        backbuttontext = "Back to registration"
+        message = "An account with this e-mail already exists"
         link = f"{flask.url_for("register")}"
         title="Fehler"
         return flask.render_template("messagetwobuttons.html", title=title,
@@ -76,10 +76,10 @@ def register():
                                      backbuttontext=backbuttontext)
 
     # msg = f"<h1>You are now registered and logged in with the email {form["email"]}</h1>"
-    title = "Registrierung"
-    message=f"Die Registrierung war erfolgreich und du bist jetzt  mit der E-Mail {form["email"]} angemeldet"
+    title = "Register"
+    message=f"The registration was succesful. Logged in with e-mail {form["email"]}"
     link = flask.url_for("dashboard")
-    buttontext = "Zum Dashboard"
+    buttontext = "To dashboard"
     response: flask.Response = flask.make_response(
         flask.render_template("messageonebutton.html", title=title, message=message,
                               link=link, buttontext=buttontext)
@@ -99,31 +99,31 @@ def login():
     form = flask.request.form
     message = None
     if not accountmanager.UserExists(form["email"]):
-        message = "Diese E-Mail ist nicht registriert"
+        message = "This e-mail is not registered"
     if not accountmanager.PasswordIsValid(form["password"]):
-        message = "Das Passwort ist ungültig" if not message else message
+        message = "Invalid password" if not message else message
     if not accountmanager.LoginIsValid(form["email"], form["password"]):
-        message = "Falsches Passwort für Account" if not message else message
+        message = "Wrong password" if not message else message
     if message:
-        title="Fehler"
+        title="Error"
         backlink = f"{flask.url_for("login")}"
-        backbuttontext = "Zurück zum Login"
+        backbuttontext = "Back to Login"
         homebuttontext = gethomebuttontext()
         return flask.render_template("messagetwobuttons.html", title=title,
                                      message=message, backlink=backlink,
                                      homebuttontext=homebuttontext,
                                      backbuttontext=backbuttontext)
 
-    title="Login"
-    # Diese message Variable und die message Variable von davor, haben
-    # nichts miteinander zu tun. Ich benenne sie immer noch nicht um,
-    # damit alle Variablen, auch wenn sie in anderen Funktionen sind,
-    # für {{ message }} in messageonebutton.html oder
-    # messageonebutton.html den gleichen Namen haben.
-    # Das hilft (für mich) für die Lesbarkeit
-    message = f"Du bist jetzt mit der E-Mail {form["email"]} eingeloggt"
+    title="Log in"
+    # This message variable and the one before are not related. They
+    # still have the same name so that all the message variables,
+    # even if they are in different functions, share the same name.
+    # This just increases readability and consistency, because in
+    # messageonebutton.html and messageonebutton.html, the placeholders
+    # for the message are also called message
+    message = f"You are now logged in with the e-mail {form["email"]}"
     link = flask.url_for("dashboard")
-    buttontext = "Zum Dashboard"
+    buttontext = "To dashboard"
     response: flask.Response = flask.make_response(
         flask.render_template("messageonebutton.html", title=title, link=link,
                               message=message, buttontext=buttontext))
@@ -132,22 +132,22 @@ def login():
                             form["email"]).accountid)
     return response
 
-# Entferne den Cookie vom Browser, damit keine Auth. mehr gemacht wird
-# Und nicht mehr geprüft wird, welcher Benutzer sich eingeloggt hat
+# Remove the cookie from the browser so that no more authorization can
+# be done
 @app.route("/logout", methods=["GET"])
 def logout():
     email = accountmanager.GetAccountFromToken(COOKIE_NAME_LOGIN_TOKEN)
-    title = "Logout"
-    message = f"Der Account mit der E-Mail {email} wurde erfolgreich ausgeloggt"
+    title = "Log out"
+    message = f"The account with the e-mail {email} logged out successfully"
     link = flask.url_for("index")
-    buttontext = "Zurück zur Startseite"
+    buttontext = "Back to home page"
     resp = flask.Response(
         flask.render_template("messageonebutton.html", title=title, link=link,
                               message=message, buttontext=buttontext))
     resp.delete_cookie(COOKIE_NAME_LOGIN_TOKEN)
     return resp
 
-# ALLE Events die erstellt wurden. Auch die, von anderen Benutzern
+# ALL events that have been created. Even the ones from other users
 @app.route("/events", methods=["GET", "POST"])
 def events():
     if flask.request.method == "GET":
@@ -155,7 +155,7 @@ def events():
         events: list[eventmanager.Event] = eventmanager.GetAllEvents()
         if not events:
             title = "Events"
-            message = "Es wurden noch keine Events erstellt"
+            message = "No Events have been created"
             link = flask.url_for("root")
             homebuttontext = gethomebuttontext()
             return flask.render_template("messageonebutton.html", title=title,
@@ -169,7 +169,8 @@ def events():
             account = accountmanager.GetAccountFromEmail(event.organizeremail)
             event.description = event.description.replace(";;;", ",")
             return f"{account.firstname} {account.lastname}"
-        # isredirect is set on /createentry if entrymanager.DidAccountAlreadyEnter()
+        # isredirect is set on /createentry
+        # if entrymanager.DidAccountAlreadyEnter()
         isredirect = flask.request.args.get("isredirect")
         homebuttontext = gethomebuttontext()
         return flask.render_template("events.html", events=events,
@@ -182,9 +183,9 @@ def events():
 
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
 
-    # Das alles wird ausgeführt, wenn die request methode POST ist.
-    # Das einzige, dass im Form übergeben wird, ist der button,
-    # der die eventid in seinem Namen hat
+    # All of this gets executed if the request method is POST.
+    # The only thing passed by the form is the button that holds the
+    # eventid in it's name
     eventid = list(flask.request.form.keys())[0]
     if entrymanager.DidAccountAlreadyEnter(accountid, eventid):
         return flask.redirect(flask.url_for("events", isredirect=True))
@@ -192,23 +193,21 @@ def events():
     entrymanager.SaveInCSV(accountid, eventid)
 
     title = "Events"
-    message = f"Du hast dich zum event '{eventmanager.GetEventFromId(eventid).eventname}' erfolgreich eingetragen"
+    message = f"You have successfully registered to '{eventmanager.GetEventFromId(eventid).eventname}'"
     backlink = flask.url_for("events")
-    backbuttontext = "Zurück zu allen Events"
+    backbuttontext = "Back to all events"
     homebuttontext = gethomebuttontext()
     return flask.render_template("messagetwobuttons.html", title=title,
                                  message=message, backlink=backlink,
                                  backbuttontext=backbuttontext,
                                  homebuttontext=homebuttontext)
 
-# This just gathers all of necessary data e.g. email and eventname and
-# returns it as a dict
-
+# This just gathers all of the necessary data like the email,
+# and eventname and returns it as a dict
 def FinishCreateEvent(cookies: dict, form: dict[str, str]) -> dict[str, str]:
-    # * Notiz: Das datetime-local input ist im ISO 860-Format.
-    # * Trotzdem gibt das datetime objekt keine Zeitzone zurück.
-    # * D.h. Das Datum wird als "yyyy-mm-ddThh:mm" gespeichert.
-    # (Anscheinend ist das T zur Trennung da)
+    # * Note: The datetime-local input is in the ISO860 format.
+    # * But the datetime object doesn't return a timezone anyway. * That means that the date will be saved as "yyyy-mm-ddThh:mm"
+    # * (Apparently the T is supposed to be a seperator)
     organizertoken = cookies[COOKIE_NAME_LOGIN_TOKEN]
     organizeremail = accountmanager.GetAccountFromToken(organizertoken).email
 
@@ -218,8 +217,8 @@ def FinishCreateEvent(cookies: dict, form: dict[str, str]) -> dict[str, str]:
     description = f(eventmanager.CSVHeader.DESCRIPTION).replace(",", ";;;")
     eventtype = f(eventmanager.CSVHeader.EVENTTYPE)
 
-    # Daten zu einem Ort sind abhängig von eventmanager.EventType
-    # bzw. eventmanager.Event.eventtype
+    # The data of a place is dependent on eventmanager.EventType or
+    # eventmanager.Event.eventtype
     country = ""
     city = ""
     zipcode: str = ""
@@ -232,16 +231,16 @@ def FinishCreateEvent(cookies: dict, form: dict[str, str]) -> dict[str, str]:
         street = f(eventmanager.CSVHeader.STREET)
         housenumber: str = f(eventmanager.CSVHeader.HOUSENUMBER)
 
-    # Etwas bessere Lesbarkeit
+    # Better readability
     h = eventmanager.CSVHeader
-    # Der einzige Header, der hier nichtzurückgegeben wird, ist die ID, die in
-    # eventmanager erstellt wird
+    # The only header that isn't being returned is the id that gets
+    # created by eventmanger
     return { h.NAME: eventname, h.EPOCH: epoch, h.EVENTTYPE: eventtype,
              h.ORGANIZER_EMAIL: organizeremail, h.COUNTRY: country, h.CITY: city,
              h.ZIPCODE: zipcode, h.STREET: street, h.HOUSENUMBER: housenumber,
              h.DESCRIPTION: description }
 
-# Ein neues Event erstellen
+# Create a new event
 @app.route("/createevent", methods=["GET", "POST"])
 def createevent():
     if flask.request.method == "GET":
@@ -258,10 +257,10 @@ def createevent():
         pass
         eventmanager.CreateEventFromForm(*eventdata.values())
     except errors.EventAlreadyExistsError:
-        title = "Fehler"
-        message = "Das Event existiert bereits"
+        title = "Error"
+        message = "The event already exists"
         backlink = flask.url_for("createevent")
-        backbuttontext = "Zurück zur Eventerstellung"
+        backbuttontext = "Back to the event creation"
         homebuttontext = gethomebuttontext()
         return flask.render_template("messagetwobuttons.html", title=title,
                                      message=message, backlink=backlink,
@@ -271,17 +270,17 @@ def createevent():
     eventname = form.get(eventmanager.CSVHeader.NAME)
     token = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
     organizeremail = accountmanager.GetAccountFromToken(token).email
-    title="Eventerstellung"
-    message = f"Das Event '{eventname}' wurde von dir mit der Email {organizeremail} erstellt"
+    title="Event creation"
+    message = f"The new event '{eventname}' has been created with the e-mail {organizeremail}"
     backlink = flask.url_for("events")
-    backbuttontext = "Zu den Events"
+    backbuttontext = "To the events"
     homebuttontext = gethomebuttontext()
     return flask.render_template("messagetwobuttons.html", title=title,
                                  message=message, backlink=backlink,
                                  backbuttontext=backbuttontext,
                                  homebuttontext=homebuttontext)
 
-# Alle Einträge, die der Account gemacht hat
+# Every event that the user has entried in
 @app.route("/entries", methods=["GET", "POST"])
 def entries():
     if flask.request.method == "GET":
@@ -289,10 +288,10 @@ def entries():
         events: list[eventmanager.Event] = entrymanager.GetAllEntriedEventsOfAccount(accountid)
 
         if not events:
-            title = "Fehler"
-            message = "Du hast noch zu keinem Event eingetragen"
+            title = "Error"
+            message = "You haven't made an entry to an event yet"
             backlink = flask.url_for("events")
-            backbuttontext = "Zu den Events"
+            backbuttontext = "To all Events"
             homebuttontext = gethomebuttontext()
             return flask.render_template("messagetwobuttons.html", title=title,
                                          message=message, backlink=backlink,
@@ -321,29 +320,29 @@ def entries():
     accountid = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
     entrymanager.DeleteEntry(accountid, eventid)
 
-    title = "Einträge"
-    message = f"Dein Eintrag zum Event '{eventmanager.GetEventFromId(eventid).eventname}' wurde erfolgreich gelöscht"
+    title = "Entries"
+    message = f"Your entry to the event '{eventmanager.GetEventFromId(eventid).eventname}' has been deleted successfully"
     backlink = flask.url_for("entries")
-    backbuttontext = "Zurück zu den Einträgen"
+    backbuttontext = "Back to your entries"
     homebuttontext = gethomebuttontext()
     return flask.render_template("messagetwobuttons.html", title=title,
                                  message=message, backlink=backlink,
                                  backbuttontext=backbuttontext,
                                  homebuttontext=homebuttontext)
 
-# Alle Events, die der Nutzer erstellt hat
+# All events created by the user
 @app.route("/myevents", methods=["GET", "POST"])
 def myevents():
     if flask.request.method == "GET":
         token = flask.request.cookies[COOKIE_NAME_LOGIN_TOKEN]
         email = accountmanager.GetAccountFromToken(token).email
-        title = "Meine Events"
+        title = "My events"
         try:
             createdevents = eventmanager.GetAllEventsCreatedByOrganizer(email)
         except errors.AccountHasNoEventsError:
-            message = "Du hast noch keine Events erstellt"
+            message = "You haven't created any Events"
             backlink = flask.url_for("createevent")
-            backbuttontext = "Ein Event erstellen"
+            backbuttontext = "Create an event"
             homebuttontext = gethomebuttontext()
             return flask.render_template("messagetwobuttons.html", title=title,
                                          message=message, backlink=backlink,
@@ -359,13 +358,13 @@ def myevents():
                                      eventmanager=eventmanager,
                                      homebuttontext=homebuttontext)
 
-    # Ein POST Request wird gesendet, wenn ein Event gelöscht wird
+    # A POST request is sent to delete the event
     eventid = list(flask.request.form.keys())[0]
     eventmanager.DeleteEvent(eventid)
-    title = "Meine Events"
-    message = "Das Event wurde erfolgreich gelöscht."
+    title = "My events"
+    message = "The event has been deleted successfully."
     backlink = flask.url_for("myevents")
-    backbuttontext = "Zurück zu deinen Events"
+    backbuttontext = "Back to your events"
     homebuttontext = gethomebuttontext()
     return flask.render_template("messagetwobuttons.html", title=title,
                                  message=message, backlink=backlink,
@@ -374,19 +373,19 @@ def myevents():
 
 @app.route("/modifyevent", methods=["GET", "POST"])
 def modifyevent():
-    # Notiz: Die ID des Events ist der erste und einzige Schlüssel in den
-    # args. des GET Requests
-    # Die Eventdaten werden als Form übergeben
+    # Note: The id of the event is the first and only in the args of the
+    # GET request.
+    # The event data is passed as form
     if flask.request.method == "GET":
         eventid = list(flask.request.args.keys())[0]
         originalevent = eventmanager.GetEventFromId(eventid)
-        # Damit ich weniger schreiben muss
+        # So that I have to type less
         headers = eventmanager.CSVHeader
         eventdict = dict(zip(headers.AsList(), list(originalevent)))
         isonline = eventdict.get(headers.EVENTTYPE) == eventmanager.EventType.ONLINE
         eventdict[headers.EPOCH] = eventmanager.EpochToInputTime(eventdict[headers.EPOCH])
         homebuttontext = gethomebuttontext()
-        # createevent wird wiederverwendet, weil die Inputs gleich sind.
+        # createevent.html is being reused because the inputs are the same
         return flask.render_template("createevent.html",
                                      ismodify=True, eventid=eventid,
                                      EventType=eventmanager.EventType,
@@ -404,10 +403,10 @@ def modifyevent():
     event = eventmanager.Event.InitFromDict(eventdata)
     eventmanager.ModifyEvent(event)
 
-    title = "Meine Events"
-    message = f"Das Event '{eventdata["name"]}' wurde erfolgreich geupdated"
+    title = "My events"
+    message = f"The event '{eventdata["name"]}' has been updated successfully"
     backlink = flask.url_for("myevents")
-    backbuttontext = "Zurück zu den Events"
+    backbuttontext = "Back to your events"
     homebuttontext = gethomebuttontext()
 
     return flask.render_template("messagetwobuttons.html", title=title,
@@ -420,9 +419,9 @@ def modifyevent():
 def checkIfUserIsLoggedIn():
     token: str | None = flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN)
     allowedSitesIfLoggedOut: list[str] = ["index","register","login","events"]
-    # Durch dieses if-Statement wird verhindert, dass Seiten,
-    # die garnicht existieren, wie z.B. /abcde, error code 404 ausgeben,
-    # sondern zum index oder zum dashboard umleiten
+    # The if statement prevents that a page that may not even exist,
+    # like /abcdef for example, returns an error code of 404, but
+    # redirects to the home page or the dashboard
     loggedin = bool(token)
     if not loggedin and flask.request.endpoint not in allowedSitesIfLoggedOut:
         return flask.redirect(flask.url_for("index"))
@@ -431,7 +430,7 @@ def checkIfUserIsLoggedIn():
                                         "myevents","modifyevent"]
     if loggedin and flask.request.endpoint not in allowedSiteIfLoggedIn:
         return flask.redirect(flask.url_for("dashboard"))
-    # Nicht wird ausgegeben
+    # Nothing is being returned
 
 
 if __name__ == "__main__":

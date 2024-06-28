@@ -1,8 +1,8 @@
 #!/usr/bin/python
-# * Was ist ein Entry?
-# Ein Entry ist das, was ein Account mit einem Event verbindet.
-# Wenn z.B. ein Benutzer sich für ein Event einträgt, dann wird das
-# als einen Eintrag bzw. einer Anmeldung zu diesem Event gespeichert
+# * What is an Entry?
+# An entry is what connects an account with an event.
+# If, for example, a user registers for an event, then this is
+# is saved as an entry/registration for this event
 
 import csv
 from typing import Final, Iterable
@@ -14,9 +14,9 @@ import errors
 _CSV_PATH: Final[str] = "data"
 _CSV_ENTRY: Final[str] = f"{_CSV_PATH}\\entries.csv"
 
-# * Notiz:
-# * Ich habe keine Klasse für die Einträge (bzw. Entries) gemacht,
-# * Weil die Werte der CSV Datei sowieso nur die IDs sind
+# * Note:
+# * I don't have a class for the entries, like I did for the accounts
+# * and the events, because a dataset consists of 3 ids anyway.
 
 class CSVHeader:
     ENTRYID: Final[str] = "id"
@@ -31,8 +31,9 @@ def _getdictreader_() -> csv.DictReader:
 
 def SaveInCSV(accountid: int, eventid: int) -> None:
     entryfile_writer = open(_CSV_ENTRY, "a", newline="")
-    # Ein Dictwriter lohnt sich nicht, weil ich beim schreiben die 3 Variablen
-    # dann mit CSVHeader.AsList() zippen muss und das ist zu viel Arbeit
+    # A Dictwriter isn't worth it here because I would have to zip the 3
+    # variables with CSVHeader.AsList() and that's too much work for so
+    # little
     writer = csv.writer(entryfile_writer, delimiter=",")
     entryid = uuid.uuid4()
     writer.writerow([entryid, accountid, eventid])
@@ -40,7 +41,7 @@ def SaveInCSV(accountid: int, eventid: int) -> None:
 def DidAccountAlreadyEnter(accountid, eventid) -> bool:
     reader = _getdictreader_()
     for row in reader:
-        if not row.values():  # row ist leer
+        if not row.values():  # row is empty
             continue
         if row.get(CSVHeader.ACCOUNTID) == accountid \
             and row.get(CSVHeader.EVENTID) == eventid:
@@ -69,9 +70,9 @@ def DeleteAllEntriesWithEvent(eventid) -> None:
             continue
         rowsWithoutEvent.append(row)
 
-    # * Wichtige Notiz:
-    # Die Datei wird direkt nach dem öffnen komplett gelöscht.
-    # Bei writer.writerows() wird sie komplett neugeschrieben
+    # * Important Note:
+    # The file will be deleted immediately after being opened.
+    # writer.writerows() will completely overwrite it
     entryfile_write = open(_CSV_ENTRY, "w", newline="")
     writer = csv.DictWriter(entryfile_write, fieldnames=CSVHeader.AsList(),
                             delimiter=",")
@@ -83,7 +84,7 @@ def DeleteEntry(accountid: int, eventid: int) -> None:
     newCSV: list[dict[str, str]] = []
     for row in reader:
         if not row.values():
-            continue # raise errors.AccountHasNoEntriesError("Nur Header")
+            continue # raise errors.AccountHasNoEntriesError("Only Header")
         if row.get(CSVHeader.ACCOUNTID) == accountid and row.get(CSVHeader.EVENTID) == eventid:
             continue
         newCSV.append(row)

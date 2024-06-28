@@ -1,7 +1,8 @@
 #!/usr/bin/python
-# * Was ist ein Event?
-# Ein Event ist eine Veranstaltung, zu der sich Nutzer eintragen können.
-# Beispiele: Vorlesungen, Online-Videokonferzen, Feier
+
+# * What is an event?
+# An event is an event that users can register to
+# Examples: Lectures, Videocalls, Meetings
 
 import csv
 from typing import Final, Iterable
@@ -31,7 +32,7 @@ class CSVHeader:
     HOUSENUMBER: Final[str] = "housenumber"
     DESCRIPTION: Final[str] = "description"
 
-    # csv.DictWriter braucht die fieldnames der CSV Datei
+    # csv.DictWriter needs the fieldnames of the CSV file
     def AsList() -> list[str]:
         return [CSVHeader.EVENTID, CSVHeader.NAME, CSVHeader.EPOCH,
                 CSVHeader.EVENTTYPE, CSVHeader.ORGANIZER_EMAIL, CSVHeader.COUNTRY,
@@ -42,7 +43,7 @@ class Event:
     def InitFromDict(dictionary: csv.DictReader | dict[str, str]):
         if len(dictionary) < 11:
             raise errors.NotEnoughElementsInListError()
-        d = lambda h: dictionary.get(h)  # Weniger Boilerplate
+        d = lambda h: dictionary.get(h)  # Less boilerplate
         return Event(eventid=d(CSVHeader.EVENTID),
                      eventname=d(CSVHeader.NAME),
                      epoch=d(CSVHeader.EPOCH),
@@ -77,13 +78,13 @@ class Event:
             self.organizeremail, self.country, self.city, self.zipcode,
             self.street, self.housenumber, self.description])
 
-# Das ist nur zum ausgeben da, damiz nicht die Englischen Wörter da stehen
+# This only exists for displaying information on the frontend
 KEYS_FOR_OUTPUT = ["Eventnummer", "Eventname", "Datum", "Eventtyp",
            "Email des Veranstalters", "Land", "Stadt", "PLZ", "Strasse",
            "Hausnummer", "Beschreibung"]
 
 def GetReadableEventType(eventtype: str) -> str:
-    return "Vor Ort" if eventtype == EventType.ON_SITE else "Online"
+    return "On site" if eventtype == EventType.ON_SITE else "Online"
 
 
 _CSV_PATH: Final[str] = "data"
@@ -138,9 +139,9 @@ def IsTheSameEvent(*args) -> bool:
     if not reader:
         return False
     for row in reader:
-        # Falls ein Benutzer die exakt selben Daten nochmal eingibt,
-        # werden nur EventIDs unterschiedlich sein.
-        # Deswegen werden sie hier nicht verglichen
+        # If a user enters the exact same data of another event, then
+        # the eventids will be the only thing difference.
+        # That's why they aren't being compared
         row.pop(CSVHeader.EVENTID)
         for index, header in enumerate(CSVHeader.AsList()):
             if args[index] != row.get(header):
@@ -161,8 +162,7 @@ def SaveInCSV(eventid, eventname, epoch, eventtype, organizeremail, country, cit
                       street, housenumber, description, eventtype):
         raise errors.EventAlreadyExistsError()
     eventfile_write = open(_CSV_EVENT, "a", newline="")
-    # Es lohnt sich nicht, einen extra DictWriter zu benutzen, um nur
-    # eine Zeile hinzuzufügen
+    # It's not worth it to use a DictWriter just to insert a new dataset
     writer = csv.writer(eventfile_write, delimiter=",")
     writer.writerow([eventid, eventname, epoch,eventtype, organizeremail,
                      country, city, zipcode, street, housenumber, description])
@@ -173,7 +173,7 @@ def ModifyEvent(event: Event) -> None:
         if row.get(CSVHeader.EVENTID) == event.eventid:
             for index, header in enumerate(CSVHeader.AsList()):
                 reader[reader.index(row)][header] = list(event)[index]
-            break  # Das Event, das gesucht wurde, wurde schon gefunden
+            break  # The event has been found
 
     eventfile_write = open(_CSV_EVENT, "w", newline="")
     writer = csv.DictWriter(eventfile_write, fieldnames=CSVHeader.AsList())
@@ -181,12 +181,13 @@ def ModifyEvent(event: Event) -> None:
     writer.writerows(reader)
 
 def DeleteEvent(eventid):
-    # Hier werden alle anderen Events (und die Überschriften) gelesen
-    # und dann in die Datei überschrieben
+    # Every other row including the headers, other than the row of the
+    # event that needs to be deleted, are read and then overwriten to
+    # the file
     reader = _getdictreader_()
     newCSV: list[dict[str, str]] = []
     for row in reader:
-        if not row.values():  # Zeile ist leer
+        if not row.values():  # row is empty
             continue
         if row.get(CSVHeader.EVENTID) == eventid:
             continue

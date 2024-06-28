@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eventerstellung</title>
+    <title>Event creation</title>
 </head>
 <body>
     <div>
@@ -16,18 +16,18 @@
                 <label for="name">Eventname: </label><input type="text" name="name" id="name" value="{{ name }}" required>
             </div>
             <div class="date">
-                <label for="datetime">Datum und Uhrzeit: </label><input type="datetime-local" name="datetime" id="datetime" value="{{ datetime }}" required>
+                <label for="datetime">Date and time: </label><input type="datetime-local" name="datetime" id="datetime" value="{{ datetime }}" required>
             </div>
             <div class="dropdown">
-                <label for="type">Art des Treffens: </label><select name="type" id="type" onchange="onchange" value="{{ type }}" required>
-                    <option value="{{ EventType.ON_SITE }}">Vor Ort</option>
+                <label for="type">Event type:</label><select name="type" id="type" onchange="onchange" value="{{ type }}" required>
+                    <option value="{{ EventType.ON_SITE }}">On site</option>
                     <option value="{{ EventType.ONLINE }}">Online</option>
                 </select>
             </div>
             <script>
-                // Meine ersten und hoffentlich letzten Zeilen JavaScript, die ich in einem Projekt schreiben muss.
-                // Ich habe, durch das einbinden von JavaScript, für einen Fehler, der garnicht mal an JavaScript lag,
-                // sondern an Microsoft Edge, um die 50 Minuten verschwendet...
+                // My first and hopefully last lines of JavaScript, that I have to write in a project.
+                // By integrating JavaScript into my project, I wasted 50 minutes of my life trying to fix a bug that
+                // ended up not even being JavaScript's fault.
                 onchange = function () {
                     eventtypeSelection = document.getElementById("type");
                     if (eventtypeSelection.value === "{{  EventType.ONLINE }}") {
@@ -39,31 +39,31 @@
             </script>
             <div id="onsiteinput">
                 <div class="input">
-                    <label for="country">Land: </label><input type="text" name="country" id="country" value="{{ country }}">
+                    <label for="country">Country: </label><input type="text" name="country" id="country" value="{{ country }}">
                 </div>
                 <div class="input">
-                    <label for="city">Stadt: </label><input type="text" name="city" id="city" value="{{ city }}">
+                    <label for="city">City: </label><input type="text" name="city" id="city" value="{{ city }}">
                 </div>
                 <div class="input">
-                    <label for="zipcode">Postleitzahl: </label><input type="number" name="zipcode" id="zipcode" value="{{ zipcode }}">
+                    <label for="zipcode">Zipcode: </label><input type="number" name="zipcode" id="zipcode" value="{{ zipcode }}">
                 </div>
                 <div class="input">
-                    <label for="street">Strasse: </label><input type="text" name="street" id="street" value="{{ street }}">
+                    <label for="street">Street: </label><input type="text" name="street" id="street" value="{{ street }}">
                 </div>
                 <div class="input">
-                    <label for="housenumber">Hausnummer: </label><input type="text" name="housenumber" id="housenumber" value="{{ housenumber }}">
+                    <label for="housenumber">House number: </label><input type="text" name="housenumber" id="housenumber" value="{{ housenumber }}">
                 </div>
             </div>
             <div class="input">
-                <label for="description">Beschreibung: </label> <br>
+                <label for="description">Description: </label> <br>
                 <textarea name="description" id="description">{{ description }}</textarea>
             </div>
             <div class="submit">
                 {% if ismodify %}
                 <input type="hidden" name="eventid" value="{{ eventid }}">
-                <input type="submit" id="submit" name="submit" value="Änderungen speichern">
+                <input type="submit" id="submit" name="submit" value="Changes saved">
                 {% else %}
-                <input type="submit" id="submit" name="submit" value="Event erstellen">
+                <input type="submit" id="submit" name="submit" value="Create an event">
                 {% endif %}
             </div>
         </form>

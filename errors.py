@@ -1,23 +1,23 @@
 class AccountAlreadyExistsError(Exception):
     def __init__(self=None):
-        super().__init__("Ein Account mit der selben E-Mail ist bereits registriert")
+        super().__init__("An account with the same e-mail is already registered")
 
 class AccountDoesNotExistError(Exception):
     def __init__(self=None):
-        super().__init__("Die Email ist nicht Registriert")
+        super().__init__("The e-mail is not registered")
 
 class EventAlreadyExistsError(Exception):
     def __init__(self=None):
-        super().__init__("Das Event existiert bereit")
+        super().__init__("The event already exists")
 
 class NotEnoughElementsInListError(Exception):
     def __init__(self=None):
-        super().__init__("Es gibt nicht genug Elemente in der Liste")
+        super().__init__("There are not enough elements in the list")
 
 class AccountHasNoEntriesError(Exception):
     def __init__(self=None):
-        super().__init__("Der Account hat keine Einträge für Events")
+        super().__init__("The account doesn't have any entries for the event")
 
 class AccountHasNoEventsError(Exception):
     def __init__(self=None):
-        super().__init__("Der Account hat keine Events erstellt")
+        super().__init__("The account hasn't created any events")

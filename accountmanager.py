@@ -1,23 +1,22 @@
 #!/usr/bin/python
 
-# ! WICHTIGE NOTIZ: Ich obfuskiere Daten anstatt sie zu verschlüsseln,
-# ! weil diese Applikation sowieso nur für Demonstrationszwecke
-# ! gemacht wurde
+# ! IMPORTANT NOTE: I obfuscate the data instead of doing any encryption
+# ! because this application was only created for demonstration purposes
 from base64 import b64encode, b64decode  # Zum Obfuskieren der Daten
-import csv  # Alle Daten werden als CSVs gespeichert
+import csv  # All of the data is stored in CSV files
 import re#gex
 from typing import Final, Iterable
-import uuid  # Zur Erstellung von einmaligen IDs
+import uuid  # To create unique ids
 
 import errors
 
-# Quelle: https://regexr.com/3e48o
+# Source: https://regexr.com/3e48o
 _REGEX_VALID_EMAIL: Final = r"^\S+@\S+\.\S+$"
 _UNSUCCESFUL_MATCH = None
 _CSV_PATH: Final[str] = "data"
 _CSV_ACCOUNT: Final[str] = f"{_CSV_PATH}\\accounts.csv"
 
-# Statische Variablen in einer Klasse für bessere lesbarkeit
+# Static variables inside a class for better readabilty
 class CSVHeader:
     ACCOUNTID: Final[str] = "id"
     EMAIL: Final[str] = "email"
@@ -28,14 +27,15 @@ class CSVHeader:
         return [CSVHeader.ACCOUNTID, CSVHeader.EMAIL, CSVHeader.BASE64PASSWORD,
                      CSVHeader.FIRSTNAME, CSVHeader.LASTNAME]
 
-# Eine Klasse, damit sich app.py und eventmanager.py die Werte selber
-# nehmen können, solange sie die accountid oder email in
-# GetAccountFromEmail() oder GetAccountFromToken() selber holen
+# A class so that, as long as app.py and eventmanager.py get the
+# accountid and email from GetAccountFromEmail() or
+# GetAccountFromToken(), they can get whatever account values they need
+# themselves
 class Account:
     def InitFromDict(dictionary: csv.DictReader | dict[str, str]):
         if len(dictionary) < 5:
             raise errors.NotEnoughElementsInListError()
-        d = lambda h: dictionary.get(h)  # Weniger Boilerplate
+        d = lambda h: dictionary.get(h)  # Less boilerplate
         return Account(
             accountid=d(CSVHeader.ACCOUNTID), email=d(CSVHeader.EMAIL),
             base64password=d(CSVHeader.BASE64PASSWORD),
@@ -51,53 +51,55 @@ class Account:
         self.lastname = lastname
 
 
-# region Private Funktionen
-# Ein csv.DictReader funktioniert im Prinzip wie ein list[dict[str, str]]
+# region Private functions
+# A csv.DictReader basically works like a list[dict[str, str]]
 def _getdictreader_() -> csv.DictReader:
-    # * Komisches Python verhalten:
-    # newline in open() ist ein leerer string, weil csv.writer
-    # und csv.reader Zeilenumbrüche selber kontrollieren und deswegen
-    # \r\n direkt in die Datei selber reinschreiben.
-    # Wenn newline nicht leer ist, wird Windows jedes \r\n, dass von
-    # csv.writer geschrieben wurde, in \r\r\n umwandeln,
-    # was bedeutet, dass eine leere Zeile zwischen jedem Datensatz
-    # stehen würde.
-    # Quellen:
+    # * FUTURE ME: I believe I wasted 5 hours on this
+    # * Weird Python behaviour:
+    # The newline parameter in open() is an empty string because
+    # csv.writer and csv.reader have their own ways of controlling line
+    # breaks (they just embed a "\r\n" by themselves)
+    # If the newline parameter is not empty, Windows will turn the
+    # "\r\n" that was written by csv.writer into "\r\r\n", which results
+    # in an empty line between every data set.
+    # Sources:
     # - https://stackoverflow.com/a/3348664
-    # - Fußnote in https://docs.python.org/3/library/csv.html?highlight=csv.writer#id3
+    # - Footnote in https://docs.python.org/3/library/csv.html?highlight=csv.writer#id3
     accountfile_read = open(_CSV_ACCOUNT, "r", newline="")
     return csv.DictReader(accountfile_read, delimiter=",")
 
 def _obfuscateText_(text: bytes) -> bytes:
     if type(text) is str:
-        # Unicode anstatt UTF-8, weil Python 3 Unicode für strings benutzt
+        # Unicode instead of UTF-8 because Python 3 uses unicode for
+        # strings
         text = bytes(text, encoding="unicode")
     return b64encode(text)
 # endregion
 
-# *Notiz:
-# Ich gebe eine ganzes Objekt von Account zurück, damit app.py und
-# entrymanager.py sich die Werte nehmen können, die sie brauchen,
-# ohne, dass ich jedesmal eine neue Funktion machen muss, wo ich nur
-# den Wert, der gerade gebraucht wird, ausgeben
+# * Note:
+# I return an entire instance of Account so that app.py and
+# entrymanager.py can get the values they need themselves without me
+# always having to create a new function that just returns the value
+# that is currently needed.
 def GetAccountFromEmail(email: str) -> Account | None:
     reader: csv.DictReader = list(_getdictreader_())
     account = None
     for row in reader:
-        # * Wichtiges Detail:
-        # Es wird row.get(...) anstatt row[...] benutzt, weil
-        # row.get(...) None zurückgibt, wenn der Key, bzw. die Spalte,
-        # nicht existiert.
-        # Das ist wichtig, weil wenn die Spalte leer ist, oder die ganze
-        # Reihe leer ist, werden die Values der Keys automatisch zu None.
-        # (Pythons *eingebaute* csv Bibliothek hat Leider
-        # Schwierigkeiten mit Zeilenumbrüchen (siehe Kommentar
-        # "Komisches Python verhalten" in accountmanager.AddAccount))
+        # * Important Detail:
+        # row.get(...) is being used instead of row[...] because
+        # row.get(...) returns `None` if the key, or column, doesn't
+        # exist.
+        # This is important because the values of the keys will
+        # automatically be None if the key/column or even
+        # the entire row empty is.
+        # (Python's *BUILT-IN* csv library has some unfortunate
+        # differences when dealing with line breaks - see comment
+        # "Weird Python behaviour" in accountmanager.AddAccount)
         if row.get(CSVHeader.EMAIL) == email:
             return Account.InitFromDict(row)
     raise errors.AccountDoesNotExistError()
 
-# Notiz: Accountid == Token im Cookie
+# Note: accountid == token stored in the cookie
 def GetAccountFromToken(token: str) -> Account:
     reader: csv.DictReader = _getdictreader_()
     for row in reader:
@@ -128,39 +130,39 @@ def UserExists(email: str) -> bool:
             return True
     return False
 
-# TODO: In Zukunft noch verbessern?
+# TODO: Improve in the future?
 def PasswordIsValid(originalpassword: str) -> bool:
     if not originalpassword:
         return False
     return True
 
-# Der HTML-Typ "email" macht alles für mich
+# The HTML type "email" does everything for me
 def EmailIsValid(email: str) -> bool:
     # return re.fullmatch(_REGEX_VALID_EMAIL, email) != _UNSUCCESFUL_MATCH
     return True
 
 def SaveInCSV(email, originalpassword, firstname, lastname) -> None:
     if not PasswordIsValid(originalpassword):
-        raise ValueError("Password ist nicht gültig")
+        raise ValueError("Invalid password ")
     if not EmailIsValid(email):
-        raise ValueError("E-Mail Adresse ist nicht gültig")
+        raise ValueError("Invalid e-mail")
     reader = _getdictreader_()
 
     for row in reader:
         if email == row.get(CSVHeader.EMAIL):
             raise errors.AccountAlreadyExistsError()
 
-    accountid = uuid.uuid4()  # Zufällige UUID
+    accountid = uuid.uuid4()  # Random UUID
     with open(_CSV_ACCOUNT, "a", newline='') as accountfile_write:
         writer = csv.DictWriter(accountfile_write, fieldnames=CSVHeader.AsList(),
                                 delimiter=",")
-        # .decode() ist von der bytes Klasse und wandelt das bytes Objekt
-        # in einen str um
+        # .decode() comes from the bytes class and turns the bytes
+        # object into a str
         passwordToSave = _obfuscateText_(
             bytes(originalpassword, "unicode_escape")).decode()
 
-        # Es kann sein, dass es einen besseren Weg gibt, die Werte aus
-        # dem Account Objekt zu speichern
+        # There could be a better way to save the values from the
+        # Account object
         values = [accountid, email, passwordToSave, firstname, lastname]
         writer.writerow(dict(zip(CSVHeader.AsList(), values)))
 

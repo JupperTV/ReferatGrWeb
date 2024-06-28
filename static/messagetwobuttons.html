@@ -11,7 +11,7 @@
 		<h1>{{ message }}</h1>
 	</div>
 	<div class="buttons">
-		<!--Python verarbeitet selber automatisch, ob "/" zu /index oder zu /dashboard wechselt-->
+		<!--Python automatically evaluates whether / should redirect to /index or /dashboard-->
 		<form action="{{ backlink }}" method="get">
 			<input type="submit" name="backbutton" value="{{ backbuttontext }}">
 		</form>
