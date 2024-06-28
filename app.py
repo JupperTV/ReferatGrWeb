@@ -30,10 +30,10 @@ def dashboard():
     return flask.render_template("dashboard.html", email=email)
 
 def gethomebuttontext() -> str:
-        if flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN):
-            return "Back to dashboard"
-        else:
-            return "Back to home page"
+    if flask.request.cookies.get(COOKIE_NAME_LOGIN_TOKEN):
+        return "Back to dashboard"
+    else:
+        return "Back to home page"
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -52,7 +52,7 @@ def register():
     if not accountmanager.PasswordIsValid(form["password"]):
         message = "Invalid password" if not message else message
     if message:  # This is true if a previous if statements was true
-        title = "Regiser"
+        title = "Register"
         # checkIfUserIsLoggedIn() checks if "/" should redirect to
         # /index or /dashboard
         link = flask.url_for("root")
