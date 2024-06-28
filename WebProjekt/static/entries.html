@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=2.0">
-    <title>Einträge</title>
+    <title>Entries</title>
 </head>
 <body>
     <div>
@@ -30,7 +30,7 @@
                 {% endfor %}
             </div>
             <form action="/entries" method="post" >
-                <input type="submit" value="Eintrag in das Event löschen" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
+                <input type="submit" value="Delete entry" id="{{ event.eventid }}" name="{{ event.eventid }}" style="margin-top: 0.3%;">
             </form>
         </div>
         {% endfor %}

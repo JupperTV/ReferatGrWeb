@@ -20,4 +20,4 @@ class AccountHasNoEntriesError(Exception):
 
 class AccountHasNoEventsError(Exception):
     def __init__(self=None):
-        super().__init__("Der Account hat keine Events erstellt")
+        super().__init__("The account hasn't created any events")
