@@ -79,9 +79,9 @@ class Event:
             self.street, self.housenumber, self.description])
 
 # This only exists for displaying information on the frontend
-KEYS_FOR_OUTPUT = ["Eventnummer", "Eventname", "Datum", "Eventtyp",
-           "Email des Veranstalters", "Land", "Stadt", "PLZ", "Strasse",
-           "Hausnummer", "Beschreibung"]
+KEYS_FOR_OUTPUT = ["Event number", "Eventname", "Date", "Event type",
+           "Organizer e-mail", "Country", "City", "Zipcode", "Street",
+           "House number", "Description"]
 
 def GetReadableEventType(eventtype: str) -> str:
     return "On site" if eventtype == EventType.ON_SITE else "Online"
